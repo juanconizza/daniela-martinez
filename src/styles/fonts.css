@@ -1,0 +1,6 @@
+/* === FONT IMPORTS === */
+@font-face {
+  font-family: 'Outfit';
+  src: url('../fonts/Outfit.ttf') format('truetype');
+  font-weight: 100 900;
+}

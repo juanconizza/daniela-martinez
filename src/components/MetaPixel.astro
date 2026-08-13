@@ -1,0 +1,54 @@
+---
+const toBoolean = (value: unknown, defaultValue: boolean) => {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const normalized = String(value).trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+};
+
+const pixelId = String(import.meta.env.PUBLIC_META_PIXEL_ID ?? "").trim();
+const enableMetaTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_META_TRACKING, true);
+const shouldLoadMetaPixel = Boolean(pixelId && enableMetaTracking);
+---
+
+{
+  shouldLoadMetaPixel && (
+    <>
+      <!-- Meta Pixel Code -->
+      <!-- El evento PageView (Pixel + CAPI deduplicado) se dispara desde
+           trackingClient.js en cada astro:page-load, no acá — así se repite
+           en cada navegación con ClientRouter, no solo en la carga inicial. -->
+      <script define:vars={{ pixelId }}>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        // Apaga "Automatic Advanced Matching" (scraping automático de datos de
+        // formularios) — buena práctica tenerlo explícito bajo nuestro control
+        // en vez de depender del default del SDK.
+        //
+        // OJO — esto NO resuelve el PageView duplicado que se ve en Events
+        // Manager al navegar con ClientRouter (2 eventos de navegador por 1 de
+        // servidor, nunca deduplicados entre sí). Confirmado en producción: el
+        // duplicado es fbevents.js detectando por su cuenta los cambios de URL
+        // vía History API (pushState/replaceState, que es justo lo que usa
+        // ClientRouter) y disparando su propio PageView interno sin event_id
+        // propio. No hay forma conocida de apagar esto — ni por dashboard
+        // ("Configuración automática" ya desactivada no lo frena) ni por
+        // código — es una limitación aceptada del SDK de Meta, no un bug
+        // nuestro. No perder tiempo reinvestigándolo.
+        fbq('set', 'autoConfig', false, pixelId);
+        fbq('init', pixelId);
+      </script>
+      <noscript>
+        <img height="1" width="1" style="display:none"
+          src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`} />
+      </noscript>
+      <!-- End Meta Pixel Code -->
+    </>
+  )
+}

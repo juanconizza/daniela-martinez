@@ -1,0 +1,24 @@
+---
+/**
+ * CONTACTO — Formulario de contacto (filtro previo a WhatsApp)
+ * Se copia junto con el resto de src/pages/landing-[slug]/ al crear una
+ * landing nueva. Ver src/sections/landing-ejemplo/ContactForm.astro.
+ */
+import MainLayout from '../../../layouts/MainLayout.astro'
+import ContactForm from '../../../sections/landing-ejemplo/ContactForm.astro'
+
+// Es el template de referencia para copiar landings nuevas — no es contenido
+// real, así que en producción se oculta (redirige a 404). Sigue totalmente
+// visible en dev para poder trabajarla/copiarla.
+if (import.meta.env.PROD) {
+  return Astro.redirect('/404')
+}
+---
+
+<MainLayout
+  title="Contacto | [NOMBRE_EMPRESA]"
+  description="Dejanos tus datos y te contactamos por WhatsApp a la brevedad."
+  keywords="contacto, [NOMBRE_EMPRESA], [ciudad]"
+>
+  <ContactForm />
+</MainLayout>

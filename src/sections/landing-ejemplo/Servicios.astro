@@ -1,0 +1,46 @@
+---
+/**
+ * SERVICIOS — Grilla de servicios o beneficios
+ * TODO: Reemplazar los textos y adaptar la cantidad de tarjetas
+ * TODO: Reemplazar el número placeholder con un ícono de src/components/icons/
+ */
+import SlideAnimations from '../../components/animations/SlideAnimations.astro'
+
+// TODO: Completar con los servicios reales del cliente
+const servicios = [
+  { title: '[SERVICIO 1]', desc: '[Descripción breve del servicio 1]' },
+  { title: '[SERVICIO 2]', desc: '[Descripción breve del servicio 2]' },
+  { title: '[SERVICIO 3]', desc: '[Descripción breve del servicio 3]' },
+]
+---
+
+<section class="py-16 md:py-24 px-6 bg-white">
+  <div class="max-w-5xl mx-auto">
+    <SlideAnimations direction="up" delay={0}>
+      <p class="text-color-primary text-xs uppercase tracking-widest font-medium text-center">
+        [CATEGORÍA DE SECCIÓN]
+      </p>
+      <h2 class="mt-3 text-3xl md:text-4xl font-bold text-color-5 text-center">
+        [TÍTULO DE SECCIÓN]
+      </h2>
+      <p class="mt-4 text-gray-500 text-center max-w-2xl mx-auto">
+        [Descripción breve de la sección]
+      </p>
+    </SlideAnimations>
+
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+      {servicios.map((item, i) => (
+        <SlideAnimations direction="up" delay={i * 100}>
+          <div class="bg-gray-50 rounded-2xl p-8 text-center hover:shadow-md transition-shadow">
+            {/* TODO: Reemplazar con un ícono de src/components/icons/ */}
+            <div class="w-12 h-12 rounded-full bg-color-primary/10 flex items-center justify-center mx-auto mb-4">
+              <span class="text-color-primary font-bold text-lg">{i + 1}</span>
+            </div>
+            <h3 class="text-lg font-semibold text-color-text">{item.title}</h3>
+            <p class="mt-2 text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+          </div>
+        </SlideAnimations>
+      ))}
+    </div>
+  </div>
+</section>

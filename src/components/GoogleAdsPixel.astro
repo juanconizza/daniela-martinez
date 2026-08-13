@@ -1,0 +1,49 @@
+---
+const toBoolean = (value: unknown, defaultValue: boolean) => {
+	if (value === undefined || value === null || value === "") return defaultValue;
+	if (typeof value === "boolean") return value;
+	const normalized = String(value).trim().toLowerCase();
+	return ["1", "true", "yes", "on"].includes(normalized);
+};
+
+const googleAdsId = import.meta.env.PUBLIC_GOOGLE_ADS_ID;
+const ga4Id = import.meta.env.PUBLIC_GA4_ID;
+const enableGoogleTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_GOOGLE_TRACKING, true);
+// El script de gtag.js se carga con cualquiera de los dos ids que exista —
+// GA4 es independiente de Google Ads, un sitio puede tener solo uno de los dos.
+const gtagLoaderId = googleAdsId || ga4Id;
+const shouldLoadGooglePixel = Boolean(gtagLoaderId && enableGoogleTracking);
+---
+
+{
+	shouldLoadGooglePixel && (
+		<>
+			<script async src={`https://www.googletagmanager.com/gtag/js?id=${gtagLoaderId}`}></script>
+			<script define:vars={{ googleAdsId, ga4Id }}>
+				window.dataLayer = window.dataLayer || [];
+				function gtag() {
+					dataLayer.push(arguments);
+				}
+				window.gtag = window.gtag || gtag;
+
+				gtag('js', new Date());
+				if (googleAdsId) {
+					// A diferencia del config de GA4 (abajo), este NO lleva
+					// send_page_view:false — el hit de remarketing automático que manda
+					// al cargar sirve para la carga inicial. Pero como este script vive
+					// en <head> y no se re-ejecuta en navegaciones SPA con ClientRouter,
+					// ese auto-hit solo cubre esa primera página — el resto de
+					// navegaciones las manda trackPageView a mano (ver trackingClient.js).
+					gtag('config', googleAdsId);
+				}
+				if (ga4Id) {
+					// send_page_view:false porque el pageview de GA4 se dispara a mano en
+					// cada astro:page-load (ver trackPageView en trackingClient.js) — con
+					// ClientRouter, el auto-pageview de gtag solo dispararía en la carga
+					// inicial, no en navegaciones internas.
+					gtag('config', ga4Id, { send_page_view: false });
+				}
+			</script>
+		</>
+	)
+}

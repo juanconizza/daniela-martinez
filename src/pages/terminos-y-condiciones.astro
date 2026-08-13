@@ -1,0 +1,96 @@
+---
+// TODO: Reemplazar todos los [PLACEHOLDERS] con los datos reales del cliente
+import MainLayout from "../layouts/MainLayout.astro";
+import AnimatedButton from "../components/AnimatedButton.astro";
+
+---
+<MainLayout
+    title="Términos y Condiciones | [NOMBRE_EMPRESA]"
+    description="Términos y condiciones del servicio de [NOMBRE_EMPRESA]."
+    keywords="términos y condiciones, [NOMBRE_EMPRESA], Argentina"
+>
+    <main class="bg-white text-color-text px-6 py-16 md:py-24 font-text">
+        <div class="mx-auto w-full max-w-3xl">
+            <p class="text-color-primary text-xs uppercase tracking-widest font-medium">[NOMBRE_EMPRESA]</p>
+            <h1 class="mt-3 text-4xl md:text-5xl font-bold text-color-text leading-tight" transition:name="terminos-y-condiciones">Términos y Condiciones</h1>
+            <p class="mt-4 text-lg text-gray-600">
+                <!-- TODO: Describir brevemente el tipo de servicio -->
+                [TIPO_DE_SERVICIO] - [NOMBRE_EMPRESA]
+            </p>
+            <div class="mt-8">
+                <AnimatedButton
+                    text="Volver atrás"
+                    animate={false}
+                    icon="none"
+                    fontSizeClass="text-sm"
+                    class="bg-color-primary text-white px-6 py-2 rounded-full hover:bg-opacity-80 transition-all"
+                    onclick="history.back()"
+                />
+            </div>
+
+            <div class="mt-12 border-t border-gray-200 pt-12">
+                <section class="space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">1. Presupuestos</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        <!-- TODO: Adaptar según el proceso de presupuesto del negocio -->
+                        Los presupuestos se elaboran en base a la información proporcionada por el cliente a través de WhatsApp.
+                        La falta de información relevante puede generar ajustes en el presupuesto final.
+                    </p>
+                </section>
+
+                <section class="mt-10 space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">2. Confirmación del servicio</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        <!-- TODO: Adaptar según el proceso de confirmación del negocio -->
+                        La fecha del servicio se considera confirmada una vez acordadas las condiciones operativas entre
+                        ambas partes.
+                    </p>
+                </section>
+
+                <section class="mt-10 space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">3. Alcance del servicio</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        El servicio incluye:
+                    </p>
+                    <ul class="list-disc pl-6 text-gray-700 leading-relaxed space-y-1">
+                        <!-- TODO: Listar lo que incluye el servicio -->
+                        <li>[INCLUYE_1]</li>
+                        <li>[INCLUYE_2]</li>
+                    </ul>
+                    <p class="text-gray-700 leading-relaxed">No incluye:</p>
+                    <ul class="list-disc pl-6 text-gray-700 leading-relaxed space-y-1">
+                        <!-- TODO: Listar lo que no incluye el servicio -->
+                        <li>[NO_INCLUYE_1]</li>
+                        <li>[NO_INCLUYE_2]</li>
+                    </ul>
+                </section>
+
+                <section class="mt-10 space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">4. Responsabilidad</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        La empresa se compromete a actuar con diligencia profesional.
+                        No será responsable por situaciones de fuerza mayor (clima, tránsito, restricciones municipales)
+                        ni por información omitida por el cliente al momento de solicitar el servicio.
+                    </p>
+                </section>
+
+                <section class="mt-10 space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">5. Cancelaciones</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        <!-- TODO: Adaptar la política de cancelaciones del negocio -->
+                        Las reprogramaciones estarán sujetas a disponibilidad.
+                    </p>
+                </section>
+
+                <section class="mt-10 space-y-3">
+                    <h2 class="text-xl font-semibold text-color-text">6. Jurisdicción</h2>
+                    <p class="text-gray-700 leading-relaxed">
+                        <!-- TODO: Indicar la ciudad de jurisdicción -->
+                        Ante cualquier controversia, las partes se someten a los tribunales ordinarios de la ciudad de
+                        [CIUDAD], Argentina.
+                    </p>
+                </section>
+            </div>
+        </div>
+    </main>
+</MainLayout>

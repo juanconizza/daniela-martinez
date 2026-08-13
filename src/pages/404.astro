@@ -1,0 +1,25 @@
+---
+import MainLayout from '../layouts/MainLayout.astro'
+---
+
+<MainLayout
+  title="Página no encontrada"
+  description="No encontramos la página que buscás."
+  keywords="404, página no encontrada"
+>
+  <main class="min-h-screen bg-color-4 text-white flex items-center justify-center px-6">
+    <div class="max-w-xl text-center">
+      <p class="text-xl uppercase tracking-[0.2em] text-color-2">Error 404</p>
+      <h1 class="mt-4 text-4xl font-semibold">Pagina no encontrada</h1>
+      <p class="mt-4 text-base text-white">
+        La ruta que intentas abrir no existe o fue movida.
+      </p>
+      <a
+        href="/"
+        class="mt-8 inline-flex items-center justify-center rounded-full bg-color-5 px-6 py-3 text-sm font-semibold text-color-1 transition-colors duration-300 hover:bg-white"
+      >
+        Volver al inicio
+      </a>
+    </div>
+  </main>
+</MainLayout>

@@ -1,0 +1,101 @@
+---
+/**
+ * TrackingManager — orquesta el tracking de conversiones
+ * =========================================================
+ * Resuelve la configuración (env vars) y la inyecta como JSON para que
+ * el script cliente (./tracking/trackingClient.js) la lea sin depender
+ * de define:vars. Toda la lógica de tracking vive en ese archivo — leerlo
+ * para entender o extender el comportamiento (agregar un botón nuevo,
+ * un evento custom de Meta, etc.)
+ *
+ * Ver .github/instructions/tracking-setup.instructions.md para la guía completa.
+ */
+interface Props {
+  pixelId?: string;
+  testEventCode?: string;
+  ga4Id?: string;
+  googleAdsId?: string;
+  enableMetaTracking?: boolean;
+  enableGoogleTracking?: boolean;
+}
+
+const toBoolean = (value: unknown, defaultValue: boolean) => {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const normalized = String(value).trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+};
+
+interface GoogleConversion {
+  key: string;
+  sendTo: string;
+}
+
+// PUBLIC_GOOGLE_ADS_CONVERSIONS es un array JSON: [{"key":"whatsapp","sendTo":"AW-XXX/YYY"}, ...]
+// Permite configurar tantas conversiones de Google Ads como se necesiten, sin agregar
+// una variable de entorno nueva por cada una.
+const parseGoogleConversions = (raw: string | undefined): GoogleConversion[] => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is GoogleConversion =>
+        item && typeof item.key === "string" && typeof item.sendTo === "string"
+    );
+  } catch {
+    return [];
+  }
+};
+
+const {
+  pixelId = import.meta.env.PUBLIC_META_PIXEL_ID,
+  testEventCode = import.meta.env.PUBLIC_TEST_EVENT_CODE,
+  ga4Id = import.meta.env.PUBLIC_GA4_ID,
+  googleAdsId = import.meta.env.PUBLIC_GOOGLE_ADS_ID,
+  enableMetaTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_META_TRACKING, true),
+  enableGoogleTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_GOOGLE_TRACKING, true),
+} = Astro.props;
+
+const normalizedPixelId = String(pixelId ?? "").trim();
+const shouldTrackMeta = Boolean(enableMetaTracking && normalizedPixelId);
+
+// Defaults globales: se usan SOLO cuando el botón no especifica
+// data-track-meta-event / data-track-google-event explícitos (ej. vía las props
+// trackMetaEvent/trackGoogleEvent de AnimatedButton, o los defaults propios de
+// WhatsAppButton/CallButton). No hay mapeo por tipo (whatsapp/call) a nivel env:
+// cada botón es responsable de declarar su propio evento si necesita uno distinto.
+const config = {
+  pixelId: normalizedPixelId,
+  testEventCode,
+  shouldTrackMeta,
+  enableGoogleTracking,
+  defaultCurrency: import.meta.env.PUBLIC_TRACKING_CURRENCY || "ARS",
+  defaultMetaEvent: import.meta.env.PUBLIC_META_EVENT_DEFAULT || "Lead",
+  defaultGoogleEvent: import.meta.env.PUBLIC_GOOGLE_EVENT_DEFAULT || "generate_lead",
+  // Conversiones de Google Ads disponibles, buscadas por "key" (ver trackingClient.js).
+  // Los botones WhatsAppButton/CallButton matchean automáticamente por su
+  // data-track-type ("whatsapp"/"call") si existe una conversión con esa key.
+  googleConversions: parseGoogleConversions(import.meta.env.PUBLIC_GOOGLE_ADS_CONVERSIONS),
+  // GA4 (Analytics), independiente de Google Ads. Si está seteado, cada
+  // conversión se manda también a GA4 (además de a Ads si corresponde) y el
+  // PageView dispara un page_view manual (ver trackingClient.js).
+  ga4Id: String(ga4Id ?? "").trim(),
+  // Google Ads: gtag('config', googleAdsId) en GoogleAdsPixel.astro ya manda
+  // su propio page_view automático en la carga inicial (para remarketing),
+  // pero al vivir en <head> no se re-ejecuta en navegaciones SPA — por eso
+  // trackPageView manda el resto a mano con este id (ver trackingClient.js).
+  googleAdsId: String(googleAdsId ?? "").trim(),
+  // Sufijo automático en el mensaje de WhatsApp según de dónde vino el visitante
+  // (gclid → Google Ads, fbclid → Meta Ads). Opt-in, apagado por default.
+  appendTrafficSource: toBoolean(import.meta.env.PUBLIC_APPEND_TRAFFIC_SOURCE, false),
+  trafficSourceGoogleSuffix: import.meta.env.PUBLIC_TRAFFIC_SOURCE_GOOGLE_SUFFIX || " Los encontré por Google.",
+  trafficSourceMetaSuffix: import.meta.env.PUBLIC_TRAFFIC_SOURCE_META_SUFFIX || " Lo vi en las redes.",
+};
+---
+
+<script type="application/json" id="tracking-config" set:html={JSON.stringify(config)} />
+<script>
+  import "./tracking/trackingClient.js";
+</script>
+

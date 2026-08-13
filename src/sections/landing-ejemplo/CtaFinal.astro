@@ -1,0 +1,48 @@
+---
+/**
+ * CTA FINAL — Cierre de la landing con llamado a la acción fuerte
+ * TODO: Reemplazar los [PLACEHOLDERS] con el texto real
+ */
+import AnimatedButton from '../../components/AnimatedButton.astro'
+import SlideAnimations from '../../components/animations/SlideAnimations.astro'
+
+interface Props {
+  whatsappUrl: string
+}
+
+const { whatsappUrl } = Astro.props
+---
+
+<section class="py-20 md:py-32 px-6 bg-white text-center">
+  <SlideAnimations direction="up">
+    <h2 class="text-3xl md:text-5xl font-bold text-color-text max-w-2xl mx-auto leading-tight">
+      [CTA FINAL: ej. "¿Listo para empezar?"]
+    </h2>
+    <p class="mt-4 text-lg text-gray-500 max-w-lg mx-auto">
+      [Descripción de apoyo al CTA]
+    </p>
+    <div class="mt-10">
+      <AnimatedButton
+        text="Consultá ahora por WhatsApp"
+        href={whatsappUrl}
+        icon="whatsapp"
+        trackLead={true}
+        whatsappUrl={whatsappUrl}
+        data-track-type="whatsapp"
+        data-button-text="CTA Final"
+        class="bg-color-cta text-white px-10 py-5 rounded-full font-semibold text-xl"
+      />
+    </div>
+    <!-- TODO: Quitar si la landing no necesita el filtro del formulario de contacto -->
+    <div class="mt-6">
+      <a
+        href="/landing-ejemplo/contacto"
+        transition:name="contacto"
+        class="group inline-flex items-center gap-1.5 text-color-primary font-medium hover:gap-2.5 transition-all duration-300"
+      >
+        Prefiero completar un formulario
+        <span class="inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </a>
+    </div>
+  </SlideAnimations>
+</section>

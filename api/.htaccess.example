@@ -1,0 +1,7 @@
+# Necesario en hosting compartido (Hostinger, cPanel, etc.) donde no hay panel
+# para setear variables de entorno de proceso — mod_env de Apache las inyecta acá.
+#
+# Copiar este archivo como "api/.htaccess" (SIN el ".example") y reemplazar el
+# placeholder por el token real. NUNCA commitear api/.htaccess con el token real
+# (ya está en .gitignore).
+SetEnv META_CAPI_TOKEN reemplazar_con_el_token_real

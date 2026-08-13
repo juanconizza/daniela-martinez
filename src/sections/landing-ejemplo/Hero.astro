@@ -1,0 +1,53 @@
+---
+/**
+ * HERO — Primera sección de la landing
+ * TODO: Agregar logo con <Image> de astro:assets
+ */
+import AnimatedButton from '../../components/AnimatedButton.astro'
+import SlideAnimations from '../../components/animations/SlideAnimations.astro'
+
+interface Props {
+  whatsappUrl: string
+  phoneNumber: string
+}
+
+const { whatsappUrl, phoneNumber } = Astro.props
+---
+
+<section class="relative bg-color-primary text-white px-6 py-20 md:py-32 text-center overflow-hidden">
+  <SlideAnimations direction="up" delay={0}>
+    <!-- TODO: Reemplazar con <Image> del logo del cliente -->
+    <p class="text-color-accent text-xs uppercase tracking-widest font-medium mb-4">
+      [SUBTÍTULO O CATEGORÍA]
+    </p>
+    <h1 class="text-4xl md:text-6xl font-bold leading-tight max-w-3xl mx-auto">
+      [TÍTULO PRINCIPAL DE IMPACTO]
+    </h1>
+    <p class="mt-6 text-lg md:text-xl text-white/80 max-w-xl mx-auto">
+      [PROPUESTA DE VALOR: qué problema resuelven, para quién, diferenciador clave]
+    </p>
+    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <AnimatedButton
+        text="Quiero más información"
+        href={whatsappUrl}
+        icon="whatsapp"
+        trackLead={true}
+        whatsappUrl={whatsappUrl}
+        data-track-type="whatsapp"
+        data-button-text="Hero CTA"
+        class="bg-color-cta text-white px-8 py-4 rounded-full font-semibold text-lg"
+      />
+      <!-- TODO: Eliminar si la landing no necesita botón de llamada -->
+      <AnimatedButton
+        text={`Llamar: ${phoneNumber}`}
+        href={`tel:${phoneNumber}`}
+        icon="call"
+        trackLead={true}
+        data-track-type="call"
+        data-button-text="Hero Call"
+        animate={false}
+        class="border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-color-primary transition-colors"
+      />
+    </div>
+  </SlideAnimations>
+</section>

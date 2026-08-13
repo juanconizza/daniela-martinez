@@ -1,0 +1,403 @@
+---
+import Star from "./icons/Star.astro";
+
+interface Testimonial {
+  text: string;
+  name: string;
+  lugar: string;
+  image: string;
+  rating?: number;
+}
+
+interface Props {
+  testimonials: Testimonial[];
+  autoplay?: boolean;
+  interval?: number;
+  class?: string;
+}
+
+const {
+  testimonials,
+  autoplay = true,
+  interval = 5000,
+  class: className = "",
+} = Astro.props;
+
+const sliderId = `testimonials-${Math.random().toString(36).slice(2, 8)}`;
+const showArrows = testimonials.length > 3;
+---
+
+<div
+  id={sliderId}
+  class={`testimonial-slider ${className}`}
+  data-autoplay={autoplay}
+  data-interval={interval}
+>
+  <div class="overflow-hidden">
+    <div class="testimonial-track flex -mx-3" data-track>
+      {testimonials.map((item) => (
+        <article class="testimonial-slide px-3" data-slide>
+          <div class="h-full text-center text-white text-lg md:text-xl font-light italic leading-7">
+            <img
+              class="mx-auto rounded-full h-32 w-32"
+              src={item.image}
+              alt={`Testimonio de ${item.name}`}
+              loading="lazy"
+            />
+            <p class="font-title font-bold text-white text-2xl md:text-2xl not-italic mt-3">{item.name}</p>
+            <p class="font-title font-bold text-color-1 text-xl md:text-xl not-italic leading-none">{item.lugar}</p>
+            <div class="flex justify-center gap-1 my-3 text-color-1">
+              {Array.from({ length: item.rating ?? 5 }).map(() => (
+                <Star width={23} height={23} stroke="var(--color-5)" fill="var(--color-5)" />
+              ))}
+            </div>
+            <p class="mt-2 text-xl md:text-xl">{item.text}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+
+  <div class="mt-6 flex items-center justify-center gap-4 text-3xl">
+    {showArrows && (
+      <button
+        type="button"
+        class="hidden md:inline-flex rounded-full border border-white px-4 py-2 text-white hover:bg-color-5 hover:text-white transition"
+        data-prev
+        aria-label="Anterior"
+      >
+        ←
+      </button>
+    )}
+    <div class="flex items-center justify-center gap-2 min-h-[20px]" data-dots></div>
+    {showArrows && (
+      <button
+        type="button"
+        class="hidden md:inline-flex rounded-full border border-white px-4 py-2 text-white hover:bg-color-5 hover:text-white transition"
+        data-next
+        aria-label="Siguiente"
+      >
+        →
+      </button>
+    )}
+  </div>
+</div>
+
+<style>
+  .testimonial-slide {
+    flex: 0 0 100%;
+  }
+
+  @media (min-width: 768px) {
+    .testimonial-slide {
+      flex-basis: 33.3333%;
+    }
+  }
+
+  .testimonial-track {
+    transition: transform 500ms ease;
+    will-change: transform;
+  }
+
+  .testimonial-slider {
+    touch-action: pan-y;
+  }
+</style>
+
+<script define:vars={{ sliderId }}>
+  function setupTestimoniosSlider() {
+    const root = document.getElementById(sliderId);
+
+    if (!root) {
+      return;
+    }
+
+    // Si ya había un slider corriendo en este root de una visita anterior a
+    // esta página, frenarlo antes de armar uno nuevo (si no, se acumulan
+    // setInterval del autoplay y listeners de resize en document/window).
+    if (root.__testimoniosCleanup) {
+      root.__testimoniosCleanup();
+    }
+
+    const track = root.querySelector("[data-track]");
+    const slides = Array.from(root.querySelectorAll("[data-slide]"));
+    const prevButton = root.querySelector("[data-prev]");
+    const nextButton = root.querySelector("[data-next]");
+    const dotsContainer = root.querySelector("[data-dots]");
+    const autoplay = root.dataset.autoplay !== "false";
+    const interval = Number(root.dataset.interval || "5000");
+
+    if (!(track instanceof HTMLElement) || slides.length === 0 || !(dotsContainer instanceof HTMLElement)) {
+      return;
+    }
+
+    let index = 0;
+    let timer = null;
+    let startX = null;
+    let deltaX = 0;
+    let manualInteraction = false;
+
+    const getPerView = () => (window.matchMedia("(min-width: 768px)").matches ? 3 : 1);
+
+    const getMaxIndex = () => {
+      const perView = getPerView();
+      return Math.max(0, slides.length - perView);
+    };
+
+    const getPageCount = () => {
+      const perView = getPerView();
+      // En mobile (perView = 1), mostrar un dot por cada slide
+      if (perView === 1) {
+        return slides.length;
+      }
+      // En desktop, agrupar por páginas
+      return Math.max(1, Math.ceil(slides.length / perView));
+    };
+
+    const setIndex = (nextIndex) => {
+      const maxIndex = getMaxIndex();
+      index = Math.min(Math.max(0, nextIndex), maxIndex);
+      update();
+    };
+
+    const updateDots = () => {
+      const perView = getPerView();
+      const maxIndex = getMaxIndex();
+      // En mobile, cada dot corresponde directamente al índice del slide
+      let activeIndex;
+      if (perView === 1) {
+        activeIndex = index;
+      } else {
+        // En desktop, si estamos en maxIndex (última página parcial), usar último dot
+        if (index >= maxIndex) {
+          activeIndex = getPageCount() - 1;
+        } else {
+          activeIndex = Math.floor(index / perView);
+        }
+      }
+      
+      dotsContainer.querySelectorAll("button").forEach((dot, dotIndex) => {
+        const isActive = dotIndex === activeIndex;
+        dot.classList.toggle("is-active", isActive);
+        dot.setAttribute('aria-current', isActive ? 'page' : 'false');
+        
+        // Aplicar estilos inline para el estado activo/inactivo
+        if (isActive) {
+          dot.style.backgroundColor = 'var(--color-5)';
+          dot.style.transform = 'scale(1.2)';
+        } else {
+          dot.style.backgroundColor = 'white';
+          dot.style.transform = 'scale(1)';
+        }
+      });
+    };
+
+    const update = () => {
+      const slideWidth = slides[0].getBoundingClientRect().width;
+      track.style.transform = `translateX(${-index * slideWidth}px)`;
+      updateDots();
+    };
+
+    const buildDots = () => {
+      dotsContainer.innerHTML = "";
+      const pageCount = getPageCount();
+      const perView = getPerView();
+      
+      // Aplicar estilos directos al contenedor
+      dotsContainer.style.display = 'flex';
+      dotsContainer.style.gap = '8px';
+      dotsContainer.style.padding = '10px 0';
+      
+      for (let i = 0; i < pageCount; i += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "testimonial-dot";
+        button.setAttribute('aria-label', `Ir al testimonio ${i + 1} de ${pageCount}`);
+        button.setAttribute('aria-current', i === 0 ? 'page' : 'false');
+        
+        // Aplicar estilos inline para máxima prioridad
+        const isMobile = perView === 1;
+        button.style.width = isMobile ? '16px' : '12px';
+        button.style.height = isMobile ? '16px' : '12px';
+        button.style.borderRadius = '50%';
+        button.style.border = isMobile ? '1px solid var(--color-5)' : '1px solid var(--color-5)';
+        button.style.backgroundColor = 'var(--color-5)';
+        button.style.cursor = 'pointer';
+        button.style.padding = '0';
+        button.style.margin = '0';
+        button.style.display = 'block';
+        button.style.flexShrink = '0';
+        button.style.transition = 'all 200ms ease';
+        
+        button.addEventListener("click", () => {
+          const maxIndex = getMaxIndex();
+          let targetIndex;
+          if (perView === 1) {
+            targetIndex = i;
+          } else {
+            // Si es la última página, ir a maxIndex (última página parcial)
+            targetIndex = (i === pageCount - 1) ? maxIndex : i * perView;
+          }
+          setIndex(targetIndex);
+          manualInteraction = true;
+          stopAutoplay();
+        });
+        dotsContainer.appendChild(button);
+      }
+    };
+
+    const goNext = () => {
+      const perView = getPerView();
+      const maxIndex = getMaxIndex();
+      
+      if (perView === 1) {
+        // Mobile: avanzar de 1 en 1
+        const nextIndex = index + 1;
+        if (nextIndex > maxIndex) {
+          setIndex(0);
+        } else {
+          setIndex(nextIndex);
+        }
+      } else {
+        // Desktop: avanzar por páginas completas
+        const pageCount = getPageCount();
+        const currentPage = index >= maxIndex ? pageCount - 1 : Math.floor(index / perView);
+        const nextPage = currentPage + 1;
+        
+        if (nextPage >= pageCount) {
+          setIndex(0);
+        } else if (nextPage === pageCount - 1) {
+          setIndex(maxIndex);
+        } else {
+          setIndex(nextPage * perView);
+        }
+      }
+    };
+
+    const goPrev = () => {
+      const perView = getPerView();
+      const maxIndex = getMaxIndex();
+      
+      if (perView === 1) {
+        // Mobile: retroceder de 1 en 1
+        const prevIndex = index - 1;
+        if (prevIndex < 0) {
+          setIndex(maxIndex);
+        } else {
+          setIndex(prevIndex);
+        }
+      } else {
+        // Desktop: retroceder por páginas completas
+        const pageCount = getPageCount();
+        const currentPage = index >= maxIndex ? pageCount - 1 : Math.floor(index / perView);
+        const prevPage = currentPage - 1;
+        
+        if (prevPage < 0) {
+          setIndex(maxIndex);
+        } else if (prevPage === pageCount - 1) {
+          setIndex(maxIndex);
+        } else {
+          setIndex(prevPage * perView);
+        }
+      }
+    };
+
+    const startAutoplay = () => {
+      if (!autoplay) {
+        return;
+      }
+      timer = window.setInterval(goNext, interval);
+    };
+
+    const stopAutoplay = () => {
+      if (timer) {
+        window.clearInterval(timer);
+        timer = null;
+      }
+    };
+
+    prevButton?.addEventListener("click", () => {
+      goPrev();
+      manualInteraction = true;
+      stopAutoplay();
+    });
+
+    nextButton?.addEventListener("click", () => {
+      goNext();
+      manualInteraction = true;
+      stopAutoplay();
+    });
+
+    root.addEventListener("mouseenter", stopAutoplay);
+    root.addEventListener("mouseleave", () => {
+      if (!manualInteraction) {
+        startAutoplay();
+      }
+    });
+
+    const onPointerDown = (event) => {
+      if (event.pointerType === "mouse") {
+        return;
+      }
+      startX = event.clientX;
+      deltaX = 0;
+      manualInteraction = true;
+      stopAutoplay();
+      root.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event) => {
+      if (startX === null) {
+        return;
+      }
+      deltaX = event.clientX - startX;
+      if (Math.abs(deltaX) > 5) {
+        event.preventDefault();
+      }
+    };
+
+    const onPointerUp = (event) => {
+      if (startX === null) {
+        return;
+      }
+
+      const threshold = 50;
+      if (deltaX > threshold) {
+        goPrev();
+      } else if (deltaX < -threshold) {
+        goNext();
+      }
+
+      startX = null;
+      deltaX = 0;
+      if (event?.pointerId !== undefined) {
+        root.releasePointerCapture(event.pointerId);
+      }
+    };
+
+    root.addEventListener("pointerdown", onPointerDown, { passive: false });
+    root.addEventListener("pointermove", onPointerMove, { passive: false });
+    root.addEventListener("pointerup", onPointerUp);
+    root.addEventListener("pointercancel", onPointerUp);
+
+    const onResize = () => {
+      buildDots();
+      setIndex(0);
+    };
+
+    window.addEventListener("resize", onResize);
+    root.__testimoniosCleanup = () => {
+      stopAutoplay();
+      window.removeEventListener("resize", onResize);
+    };
+
+    buildDots();
+    update();
+    startAutoplay();
+  }
+
+  // astro:page-load dispara en la carga inicial Y en cada navegación con
+  // ClientRouter — necesario porque este script no se re-ejecuta solo al
+  // volver a una página ya visitada.
+  document.addEventListener('astro:page-load', setupTestimoniosSlider);
+</script>

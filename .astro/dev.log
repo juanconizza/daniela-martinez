@@ -1,0 +1,22 @@
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Generated 0ms","label":"types","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":" astro  v7.1.2 ready in 1308 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
+{"message":"watching for file changes...","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 27ms","label":null,"level":"info"}
+{"message":"dependencies optimized: astro/virtual-modules/transitions-events.js, astro/virtual-modules/transitions-router.js, astro/virtual-modules/transitions-swap-functions.js, astro/virtual-modules/transitions-types.js","label":"vite","level":"info"}
+{"message":"[200] / 9ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 7ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 8ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo 41ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo 17ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 10ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 6ms","label":null,"level":"info"}
+{"message":"[404] /robots.txt 29ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 8ms","label":null,"level":"info"}
+{"message":"[200] / 5ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo 9ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 7ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo/contacto 7ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo 10ms","label":null,"level":"info"}
+{"message":"[200] /landing-ejemplo 23ms","label":null,"level":"info"}

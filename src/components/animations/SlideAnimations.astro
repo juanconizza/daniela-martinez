@@ -1,0 +1,92 @@
+---
+interface Props {
+	variant?: "up" | "left" | "right";
+	delay?: number;
+	duration?: number;
+	class?: string;
+	once?: boolean;
+}
+
+const {
+	variant = "up",
+	delay = 300,
+	duration = 800,
+	class: className = "",
+	once = true,
+} = Astro.props;
+---
+
+<div
+	class={`slide-anim ${className}`}
+	data-variant={variant}
+	data-delay={delay}
+	data-duration={duration}
+	data-once={once}
+>
+	<slot />
+</div>
+
+<style>
+	.slide-anim {
+		transform: translateY(24px);
+		transition-property: transform;
+		transition-timing-function: ease-out;
+		will-change: transform, opacity;
+	}
+
+	.slide-anim[data-variant="left"] {
+		transform: translateX(-24px);
+	}
+
+	.slide-anim[data-variant="right"] {
+		transform: translateX(24px);
+	}
+
+	.slide-anim.is-visible {
+		transform: translateX(0) translateY(0);
+	}
+</style>
+
+<script>
+	function setupSlideAnimations() {
+		const elements = document.querySelectorAll('.slide-anim');
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					const target = entry.target;
+
+					if (!(target instanceof HTMLElement)) {
+						return;
+					}
+
+					const delay = Number(target.dataset.delay || '0');
+					const duration = Number(target.dataset.duration || '600');
+					const once = target.dataset.once !== 'false';
+
+					target.style.transitionDuration = `${duration}ms`;
+					target.style.transitionDelay = `${delay}ms`;
+
+					if (entry.isIntersecting) {
+						target.classList.add('is-visible');
+						if (once) {
+							observer.unobserve(target);
+						}
+					} else if (!once) {
+						target.classList.remove('is-visible');
+					}
+				});
+			},
+			{
+				threshold: 0.2,
+			}
+		);
+
+		elements.forEach((el) => observer.observe(el));
+	}
+
+	// astro:page-load dispara en la carga inicial Y en cada navegación con
+	// ClientRouter — necesario porque este script no se re-ejecuta solo al
+	// volver a una página ya visitada.
+	document.addEventListener('astro:page-load', setupSlideAnimations);
+</script>

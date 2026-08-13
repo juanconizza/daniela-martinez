@@ -1,0 +1,89 @@
+---
+/**
+ * CONTACT FORM — Formulario de contacto como filtro previo a WhatsApp
+ * TODO: Reemplazar los [PLACEHOLDERS] con el texto real
+ *
+ * Captura nombre/teléfono/email/localidad, arma el mensaje de WhatsApp con
+ * esos datos y los envía como Advanced Matching a Meta (Pixel + CAPI) y
+ * Google (Enhanced Conversions) para mejorar el matching de la conversión.
+ * Toda la lógica de envío vive en src/components/tracking/trackingClient.js.
+ */
+import AnimatedButton from '../../components/AnimatedButton.astro'
+
+interface Props {
+  whatsappNumber?: string
+}
+
+const { whatsappNumber = import.meta.env.PUBLIC_CEL_PHONE_NUMBER } = Astro.props
+
+// TODO: Personalizar el mensaje según el negocio. Placeholders disponibles: {fn} {ln} {em} {ph} {ct}
+const messageTemplate = 'Hola! Soy {fn}, de {ct}. Quería consultar por sus servicios.'
+
+const inputClass =
+  'w-full rounded-xl border border-gray-300 px-4 py-3 text-color-text focus:outline-none focus:ring-2 focus:ring-color-primary focus:border-transparent transition-all'
+const labelClass = 'block text-sm font-medium text-color-text mb-1'
+---
+
+<section class="py-20 md:py-32 px-6 bg-white">
+  <div class="mx-auto w-full max-w-lg">
+    <p class="text-color-primary text-xs uppercase tracking-widest font-medium text-center">
+      [CATEGORÍA]
+    </p>
+    <h1
+      class="mt-3 text-3xl md:text-4xl font-bold text-color-text text-center leading-tight"
+      transition:name="contacto"
+    >
+      [TÍTULO: ej. "Contanos qué necesitás"]
+    </h1>
+    <p class="mt-4 text-gray-500 text-center">
+      [Descripción breve: completá tus datos y te contactamos por WhatsApp en minutos]
+    </p>
+
+    <form
+      class="mt-10 space-y-5"
+      data-track-form="true"
+      data-track-type="form"
+      data-track-meta-event="Lead"
+      data-track-google-event="generate_lead"
+      data-track-google-conversion="contacto_form"
+      data-whatsapp-number={whatsappNumber}
+      data-message-template={messageTemplate}
+      data-button-text="Formulario de Contacto"
+    >
+      <div>
+        <label for="contact-fn" class={labelClass}>Nombre</label>
+        <input id="contact-fn" name="fn" type="text" autocomplete="given-name" data-track-field="fn" required class={inputClass} />
+      </div>
+      <div>
+        <label for="contact-ph" class={labelClass}>Teléfono</label>
+        <input id="contact-ph" name="ph" type="tel" autocomplete="tel" data-track-field="ph" required class={inputClass} />
+      </div>
+      <div>
+        <label for="contact-em" class={labelClass}>Email</label>
+        <input id="contact-em" name="em" type="email" autocomplete="email" data-track-field="em" required class={inputClass} />
+      </div>
+      <div>
+        <label for="contact-ct" class={labelClass}>Localidad</label>
+        <input id="contact-ct" name="ct" type="text" autocomplete="address-level2" data-track-field="ct" required class={inputClass} />
+      </div>
+
+      <AnimatedButton
+        type="submit"
+        text="Contactanos por WhatsApp"
+        icon="whatsapp"
+        class="w-full mt-4 bg-color-cta text-white px-8 py-4 rounded-full font-semibold text-lg"
+      />
+    </form>
+
+    <div class="mt-8 text-center">
+      <AnimatedButton
+        text="Volver atrás"
+        animate={false}
+        icon="none"
+        fontSizeClass="text-sm"
+        class="bg-transparent text-color-primary px-4 py-2 hover:underline"
+        onclick="history.back()"
+      />
+    </div>
+  </div>
+</section>

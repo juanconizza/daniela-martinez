@@ -1,0 +1,226 @@
+---
+// Importar dinámicamente todos los iconos
+const iconModules = import.meta.glob<{ default: any }>("./icons/*.astro", { eager: true });
+
+// Extraer nombres de iconos disponibles (sin extensión .astro)
+const availableIcons = Object.keys(iconModules)
+  .map(path => path.split("/").pop()?.replace(".astro", "") || "")
+  .filter(name => name && name !== "Star") // Excluir iconos no usables directamente
+  .map(name => name.charAt(0).toLowerCase() + name.slice(1));
+
+type IconName = typeof availableIcons[number] | "none";
+
+interface Props {
+  text: string;
+  animate?: boolean;
+  class?: string;
+  iconClass?: string;
+  iconSizeClass?: string;
+  icon?: IconName;
+  iconWidth?: string | number;
+  iconHeight?: string | number;
+  iconStroke?: string;
+  iconFill?: string;
+  fontSizeClass?: string;
+  noWrap?: boolean;
+  onclick?: string;
+  type?: "button" | "submit" | "reset";
+  ariaLabel?: string;
+  trackLead?: boolean;
+  whatsappUrl?: string;
+  phoneNumber?: string;
+  messageText?: string;
+  callPhoneNumber?: string;
+  href?: string;
+  hrefTarget?: string;
+  trackType?: "whatsapp" | "call" | "default";
+  trackMetaEvent?: string;
+  trackGoogleEvent?: string;
+  trackGoogleSendTo?: string;
+  trackGoogleConversion?: string;
+  trackValue?: number;
+  trackCurrency?: string;
+  buttonText?: string;
+  highlightText?: string;
+  highlightClass?: string;
+}
+
+const { 
+  text = "Solicitá tu turno", 
+  animate = true, 
+  class: customClass = "",
+  iconClass =  "inline-block mr-2",
+  iconSizeClass = "",
+  icon = "none",
+  iconWidth = 48,
+  iconHeight = 48,
+  iconStroke = "#FFFFFF",
+  iconFill = "#FFFFFF",
+  fontSizeClass = "text-[clamp(1rem,2.2vw,1.75rem)]",
+  noWrap = true,
+  onclick,
+  type = "button",
+  ariaLabel,
+  trackLead = false,
+  whatsappUrl: customWhatsappUrl,
+  phoneNumber = import.meta.env.PUBLIC_CEL_PHONE_NUMBER,
+  messageText = "Hola! Me interesa un servicio de mundanza.",
+  callPhoneNumber,
+  href,
+  hrefTarget,
+  trackType,
+  trackMetaEvent,
+  trackGoogleEvent,
+  trackGoogleSendTo,
+  trackGoogleConversion,
+  trackValue,
+  trackCurrency,
+  buttonText,
+  highlightText,
+  highlightClass = "",
+} = Astro.props;
+
+// Default classes for button styling
+const defaultButtonClass = "bg-gradient-to-r from-color-2 to-[#d39f39] text-color-4 px-2 md:px-14 w-full md:w-auto py-2 md:py-3 rounded-full font-bold font-text transition-all duration-300 shadow-lg hover:shadow-xl";
+
+// Combine custom class with defaults, or use defaults if no custom class provided
+const buttonClass = customClass || defaultButtonClass;
+
+// Construir whatsappUrl si trackLead es true y no se proporciona URL personalizada
+const whatsappUrl = customWhatsappUrl || 
+  (trackLead ? `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageText)}` : undefined);
+
+// Split text for partial highlighting
+const textParts = highlightText
+  ? (() => {
+      const idx = text.indexOf(highlightText);
+      if (idx === -1) return null;
+      return {
+        before: text.slice(0, idx),
+        highlight: highlightText,
+        after: text.slice(idx + highlightText.length),
+      };
+    })()
+  : null;
+
+const resolvedHref = href || (callPhoneNumber ? `tel:${callPhoneNumber}` : undefined);
+const resolvedTrackType = trackType || (callPhoneNumber ? 'call' : 'whatsapp');
+const resolvedButtonText = buttonText || text;
+
+// Obtener componente de icono dinámicamente
+const getIconComponent = (iconName: string) => {
+  if (iconName === "none") return null;
+  
+  const iconKey = Object.keys(iconModules).find(
+    path => path.toLowerCase().endsWith(`/${iconName.toLowerCase()}.astro`)
+  );
+  
+  return iconKey ? iconModules[iconKey].default : null;
+};
+
+const IconComponent = getIconComponent(icon);
+const resolvedIconClass = `${iconClass} ${iconSizeClass}`.trim();
+
+// Clases compartidas para botón y enlace
+const sharedClasses = `animated-cta-btn inline-flex items-center justify-center gap-1 md:gap-2 ${animate ? 'animated' : ''} ${buttonClass} ${fontSizeClass} ${noWrap ? 'whitespace-nowrap' : ''}`;
+---
+
+{callPhoneNumber ? (
+  <a
+    href={resolvedHref}
+    target={hrefTarget}
+    aria-label={ariaLabel}
+    data-track-lead={trackLead ? 'true' : undefined}
+    data-track-type={trackLead ? resolvedTrackType : undefined}
+    data-track-meta-event={trackLead ? trackMetaEvent : undefined}
+    data-track-google-event={trackLead ? trackGoogleEvent : undefined}
+    data-track-google-send-to={trackLead ? trackGoogleSendTo : undefined}
+    data-track-google-conversion={trackLead ? trackGoogleConversion : undefined}
+    data-track-value={trackLead ? trackValue : undefined}
+    data-track-currency={trackLead ? trackCurrency : undefined}
+    data-button-text={trackLead ? resolvedButtonText : undefined}
+    class={sharedClasses}
+  >
+    {IconComponent && (
+      iconSizeClass
+        ? <IconComponent stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+        : <IconComponent width={iconWidth} height={iconHeight} stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+    )}
+    {textParts ? (
+      <>{textParts.before}<span class={highlightClass}>{textParts.highlight}</span>{textParts.after}</>
+    ) : text}
+  </a>
+) : (
+  resolvedHref ? (
+    <a
+      href={resolvedHref}
+      target={hrefTarget}
+      aria-label={ariaLabel}
+      data-track-lead={trackLead ? 'true' : undefined}
+      data-track-type={trackLead ? resolvedTrackType : undefined}
+      data-track-meta-event={trackLead ? trackMetaEvent : undefined}
+      data-track-google-event={trackLead ? trackGoogleEvent : undefined}
+      data-track-google-send-to={trackLead ? trackGoogleSendTo : undefined}
+      data-track-google-conversion={trackLead ? trackGoogleConversion : undefined}
+      data-track-value={trackLead ? trackValue : undefined}
+      data-track-currency={trackLead ? trackCurrency : undefined}
+      data-whatsapp-url={trackLead ? whatsappUrl : undefined}
+      data-button-text={trackLead ? resolvedButtonText : undefined}
+      class={sharedClasses}
+    >
+      {IconComponent && (
+        iconSizeClass
+          ? <IconComponent stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+          : <IconComponent width={iconWidth} height={iconHeight} stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+      )}
+      {textParts ? (
+        <>{textParts.before}<span class={highlightClass}>{textParts.highlight}</span>{textParts.after}</>
+      ) : text}
+    </a>
+  ) : (
+    <button
+      type={type}
+      onclick={onclick}
+      aria-label={ariaLabel}
+      data-track-lead={trackLead ? 'true' : undefined}
+      data-track-type={trackLead ? resolvedTrackType : undefined}
+      data-track-meta-event={trackLead ? trackMetaEvent : undefined}
+      data-track-google-event={trackLead ? trackGoogleEvent : undefined}
+      data-track-google-send-to={trackLead ? trackGoogleSendTo : undefined}
+      data-track-google-conversion={trackLead ? trackGoogleConversion : undefined}
+      data-track-value={trackLead ? trackValue : undefined}
+      data-track-currency={trackLead ? trackCurrency : undefined}
+      data-whatsapp-url={trackLead ? whatsappUrl : undefined}
+      data-button-text={trackLead ? resolvedButtonText : undefined}
+      class={sharedClasses}
+    >
+      {IconComponent && (
+        iconSizeClass
+          ? <IconComponent stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+          : <IconComponent width={iconWidth} height={iconHeight} stroke={iconStroke} fill={iconFill} class={resolvedIconClass} />
+      )}
+      {textParts ? (
+        <>{textParts.before}<span class={highlightClass}>{textParts.highlight}</span>{textParts.after}</>
+      ) : text}
+    </button>
+  )
+)}
+
+<style>
+  @keyframes pulseGlow {
+    0%, 100% {
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 20px rgba(211, 159, 57, 0.2);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.6), 0 0 40px rgba(211, 159, 57, 0.4);
+      transform: scale(1.01);
+    }
+  }
+
+  .animated-cta-btn.animated {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+</style>
+
+

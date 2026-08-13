@@ -1,0 +1,168 @@
+---
+import Whatsapp from "./icons/Whatsapp.astro";
+
+interface Props {
+  /** Evento de Meta a trackear (cualquier standard o custom). Default: "Lead" */
+  metaEvent?: string;
+  /** Evento de Google Ads/GA4 a trackear. Default: "whatsapp_contact" */
+  googleEvent?: string;
+  /** Override directo del label de conversión de Google Ads (ej: "AW-123456789/abcDEFghi") */
+  googleSendTo?: string;
+  /** Key para buscar la conversión en PUBLIC_GOOGLE_ADS_CONVERSIONS (default: "whatsapp") */
+  googleConversion?: string;
+  /** Valor monetario de la conversión (default: 1.0) */
+  value?: number;
+  /** Moneda del valor (default: la configurada en .env) */
+  currency?: string;
+}
+
+const {
+  metaEvent = "Lead",
+  googleEvent = "whatsapp_contact",
+  googleSendTo,
+  googleConversion,
+  value,
+  currency,
+} = Astro.props;
+
+// TODO: Configurar PUBLIC_CEL_PHONE_NUMBER en .env
+const phoneNumber = import.meta.env.PUBLIC_CEL_PHONE_NUMBER;
+// TODO: Personalizar el mensaje según el negocio
+const message = "Hola. Quiero realizar una consulta.";
+const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+---
+
+<a 
+  href={whatsappUrl}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="whatsapp-button"
+  aria-label="Contactar por WhatsApp"
+  data-track-lead="true"
+  data-track-type="whatsapp"
+  data-track-meta-event={metaEvent}
+  data-track-google-event={googleEvent}
+  data-track-google-send-to={googleSendTo}
+  data-track-google-conversion={googleConversion}
+  data-track-value={value}
+  data-track-currency={currency}
+  data-whatsapp-url={whatsappUrl}
+  data-button-text="Contacto WhatsApp"
+>
+  <Whatsapp width={55} height={55} fill="white" stroke="white" />
+</a>
+
+<style>
+  .whatsapp-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    opacity: 0;
+    transform: scale(0);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--color-3);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+  }
+
+  .whatsapp-button img {
+    display: block;
+    filter: brightness(1) invert(0);
+  }
+
+  .whatsapp-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .whatsapp-button.show {
+    opacity: 1;
+    transform: scale(1);
+    animation: bounce 0.6s ease;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.15);
+    }
+  }
+
+  /* Animación de pulso continuo */
+  .whatsapp-button.show::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: var(--color-3);
+    z-index: -1;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.3);
+      opacity: 0;
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .whatsapp-button {
+      bottom: 15px;
+      right: 15px;
+      height: 65px; 
+      width: 65px;
+    }
+  }
+</style>
+
+<script>
+  // #scrollButtons es OPCIONAL: si la página lo define, el botón aparece al
+  // scrollear hasta ahí; si no (la mayoría de las landings no lo agregan),
+  // aparece igual a los 3s en vez de quedar invisible para siempre.
+  function setupWhatsAppButton() {
+    const button = document.querySelector('.whatsapp-button');
+    if (!button) return;
+
+    const showButton = () => button.classList.add('show');
+
+    const trigger = document.querySelector('#scrollButtons');
+    if (trigger) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            showButton();
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.1 }
+      );
+      observer.observe(trigger);
+    } else {
+      setTimeout(showButton, 3000);
+    }
+  }
+
+  // astro:page-load dispara en la carga inicial Y en cada navegación con
+  // ClientRouter — necesario porque este script no se re-ejecuta solo al
+  // volver a una página ya visitada (ver trackingClient.js para el mismo patrón).
+  document.addEventListener('astro:page-load', setupWhatsAppButton);
+</script>

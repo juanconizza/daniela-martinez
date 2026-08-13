@@ -1,0 +1,64 @@
+---
+import '../styles/global.css'
+import { ClientRouter } from 'astro:transitions';
+import MetaPixel from '../components/MetaPixel.astro';
+import GoogleAdsPixel from '../components/GoogleAdsPixel.astro';
+import ClarityPixel from '../components/ClarityPixel.astro';
+import TrackingManager from '../components/TrackingManager.astro';
+import Favicon from '../images/favicon.png';
+
+interface Props {
+  title: string;
+  description: string;
+  keywords?: string;
+  ogImage?: string; // URL absoluta para Open Graph (ej: https://dominio.com/og.jpg)
+}
+
+const { title, description, keywords, ogImage } = Astro.props;
+
+const toBoolean = (value: unknown, defaultValue: boolean) => {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const normalized = String(value).trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+};
+
+const metaPixelId = String(import.meta.env.PUBLIC_META_PIXEL_ID ?? "").trim();
+const googleAdsId = String(import.meta.env.PUBLIC_GOOGLE_ADS_ID ?? "").trim();
+const ga4Id = String(import.meta.env.PUBLIC_GA4_ID ?? "").trim();
+const enableMetaTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_META_TRACKING, true) && Boolean(metaPixelId);
+// GA4 es independiente de Google Ads — un sitio con SOLO GA4 (sin cuenta de
+// Ads) también tiene que trackear, por eso el gate mira los dos ids.
+const enableGoogleTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_GOOGLE_TRACKING, true) && Boolean(googleAdsId || ga4Id);
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    <link rel="icon" type="image/png" href={Favicon.src} />
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property="og:type" content="website" />
+    <ClientRouter />
+    {enableMetaTracking && <MetaPixel />}
+    {enableGoogleTracking && <GoogleAdsPixel />}
+    <ClarityPixel />
+  </head>
+  <body class="bg-white">
+    <TrackingManager
+      pixelId={metaPixelId}
+      ga4Id={ga4Id}
+      googleAdsId={googleAdsId}
+      enableMetaTracking={enableMetaTracking}
+      enableGoogleTracking={enableGoogleTracking}
+    />
+    <slot />
+  </body>
+</html>

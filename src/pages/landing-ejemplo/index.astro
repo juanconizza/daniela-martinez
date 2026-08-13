@@ -1,0 +1,69 @@
+---
+/**
+ * LANDING EJEMPLO — Template de referencia
+ * =========================================
+ * Copiá esta carpeta completa para crear una nueva landing:
+ *   cp -r src/pages/landing-ejemplo src/pages/landing-[slug-cliente]
+ *   cp -r src/sections/landing-ejemplo src/sections/landing-[slug-cliente]
+ *
+ * La URL será automáticamente: /landing-[slug-cliente]/
+ *
+ * TODO antes de publicar:
+ *  1. Cambiar title, description y keywords
+ *  2. Reemplazar todos los [PLACEHOLDERS] en cada sección
+ *  3. Configurar PUBLIC_CEL_PHONE_NUMBER en .env
+ *  4. Agregar logo e imágenes en src/images/
+ *  5. Activar tracking en .env si corresponde
+ */
+
+import MainLayout from '../../layouts/MainLayout.astro'
+import Hero from '../../sections/landing-ejemplo/Hero.astro'
+import Servicios from '../../sections/landing-ejemplo/Servicios.astro'
+import Stats from '../../sections/landing-ejemplo/Stats.astro'
+import CtaFinal from '../../sections/landing-ejemplo/CtaFinal.astro'
+import Footer from '../../sections/landing-ejemplo/Footer.astro'
+import WhatsAppButton from '../../components/WhatsAppButton.astro'
+import CallButton from '../../components/CallButton.astro'
+
+// TODO: Descomentar si la landing necesita estos componentes
+// import PhotoGallerySlider from '../../components/PhotoGallerySlider.astro'
+// import TestimoniosSlider from '../../components/TestimoniosSlider.astro'
+// import VimeoVideo from '../../components/VimeoVideo.astro'
+
+// Es el template de referencia para copiar landings nuevas — no es contenido
+// real, así que en producción se oculta (redirige a 404). Sigue totalmente
+// visible en dev para poder trabajarla/copiarla.
+if (import.meta.env.PROD) {
+  return Astro.redirect('/404')
+}
+
+const phoneNumber = import.meta.env.PUBLIC_CEL_PHONE_NUMBER ?? '+5493510000000'
+// TODO: Personalizar el mensaje de WhatsApp según el negocio
+const whatsappMessage = encodeURIComponent('Hola! Vi su página web y quería consultar por sus servicios.')
+const whatsappUrl = `https://wa.me/${phoneNumber}?text=${whatsappMessage}`
+---
+
+<MainLayout
+  title="[NOMBRE_EMPRESA] | [TAGLINE_PRINCIPAL]"
+  description="[DESCRIPCIÓN SEO: qué hace la empresa, dónde, beneficio principal. Máx 155 caracteres.]"
+  keywords="[keyword-1], [keyword-2], [keyword-3], [ciudad]"
+  ogImage="[URL_IMAGEN_OG_1200x630]"
+>
+  <Hero whatsappUrl={whatsappUrl} phoneNumber={phoneNumber} />
+  <Servicios />
+  <Stats />
+
+  <!-- TODO: Agregar secciones adicionales según el cliente -->
+  <!-- Opciones disponibles en src/sections/landing-ejemplo/: -->
+  <!-- <Testimonios /> → crear si hay reseñas reales -->
+  <!-- <Galeria />     → crear si hay fotos del trabajo -->
+  <!-- <Proceso />     → crear si el proceso tiene valor comunicacional -->
+  <!-- <Faq />         → crear si hay preguntas frecuentes relevantes -->
+
+  <CtaFinal whatsappUrl={whatsappUrl} />
+  <Footer />
+
+  <!-- Botones flotantes de contacto -->
+  <WhatsAppButton />
+  <CallButton />
+</MainLayout>

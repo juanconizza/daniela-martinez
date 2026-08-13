@@ -1,0 +1,45 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro'
+import CalendlyWidget from '../../../components/CalendlyWidget.astro'
+
+const calendlyUrl = import.meta.env.PUBLIC_CALENDLY_URL ?? ''
+---
+
+<MainLayout
+	title="Agendá tu cita gratuita | Método REC"
+	description="Reservá tu cita gratuita y dá el siguiente paso para recuperar tu paz."
+>
+	<Fragment slot="head">
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+			rel="stylesheet"
+		/>
+	</Fragment>
+
+	<main class="min-h-screen bg-[#150d0a] px-5 py-14 font-text text-[#f2e6da]">
+		<div class="mx-auto mb-8 max-w-2xl text-center">
+			<p class="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#d8a06a] md:text-xs">
+				Último paso
+			</p>
+			<h1 class="mb-3 font-display text-[clamp(1.75rem,4vw,2.5rem)] text-white">
+				Agendá tu cita gratuita
+			</h1>
+			<p class="text-[#e8c9a8]">Elegí el día y el horario que mejor te quede. Es sin costo y sin compromiso.</p>
+		</div>
+
+		{calendlyUrl ? (
+			<div class="mx-auto max-w-3xl rounded-3xl border border-[#c1694f]/30 bg-[#f5ece3] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] md:p-3">
+				<div class="overflow-hidden rounded-2xl" style="min-width:320px;min-height:600px;">
+					<CalendlyWidget calendlyUrl={calendlyUrl} />
+				</div>
+			</div>
+		) : (
+			<div class="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-10 text-center text-[#e8c9a8]">
+				Configurá <code class="text-[#d8a06a]">PUBLIC_CALENDLY_URL</code> en <code class="text-[#d8a06a]">.env</code> con el
+				link de tu evento de Calendly.
+			</div>
+		)}
+	</main>
+</MainLayout>

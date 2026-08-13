@@ -18,6 +18,7 @@ export default {
       },
       fontFamily: {
         text: ['Outfit', 'sans-serif'],
+        display: ['"Playfair Display"', 'serif'],
       },
     },
   },

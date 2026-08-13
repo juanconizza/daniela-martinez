@@ -1,0 +1,85 @@
+---
+import VslVideo from '../../components/VslVideo.astro'
+import SocialProofToasts from '../../components/SocialProofToasts.astro'
+import CalendlyWidget from '../../components/CalendlyWidget.astro'
+
+interface Props {
+	vimeoUrl: string;
+	calendlyUrl: string;
+	spotsLeft?: number;
+}
+
+const { vimeoUrl, calendlyUrl, spotsLeft = 4 } = Astro.props;
+---
+
+<main class="metodo-rec relative min-h-screen overflow-hidden bg-[#150d0a] font-text text-[#f2e6da]">
+	<div
+		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(193,105,79,0.25),_transparent_60%)]"
+		aria-hidden="true"
+	>
+	</div>
+
+	<section class="relative z-10 mx-auto max-w-3xl px-5 pb-20 pt-14 text-center md:pt-20">
+		<p class="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#d8a06a] md:text-xs">
+			Entrenamiento exclusivo para mujeres
+		</p>
+
+		<h1 class="mb-3 font-display text-[clamp(1.8rem,5vw,3.25rem)] leading-[1.15] text-white">
+			Así dejé de sufrir por amor<br class="hidden md:block" /> y recuperé mi paz
+		</h1>
+		<p class="md:mb-10 mb-5 font-display text-[clamp(1.25rem,3vw,1.75rem)] italic text-[#d8a06a]">
+			En menos de 90 días
+		</p>
+
+		<div class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-[#e8c9a8] md:text-sm">
+			<span aria-hidden="true">⏳</span> Este video desaparece en 24 horas
+		</div>
+
+		<VslVideo vimeoUrl={vimeoUrl} class="mx-auto mb-10 md:max-w-2xl max-w-xs" />
+
+		<a
+			href="/metodo-rec/agendar"
+			data-track-lead="true"
+			data-track-type="default"
+			data-track-meta-event="Schedule"
+			data-track-google-event="schedule_click"
+			data-button-text="Metodo REC - Agendar cita gratis"
+			class="mr-cta inline-flex items-center justify-center rounded-full bg-[#c1694f] px-10 py-4 text-base font-bold text-white shadow-[0_10px_30px_rgba(193,105,79,0.4)] transition-colors duration-300 hover:bg-[#ad5c44] md:text-lg"
+		>
+			Agendar mi cita gratis
+		</a>
+
+		<p class="mt-4 text-sm font-medium text-[#d8a06a]">
+			🔥 Quedan {spotsLeft} espacios disponibles
+		</p>
+	</section>
+
+	<SocialProofToasts messageTemplate="{count} mujeres están viendo este video ahora" minCount={11} maxCount={88} />
+
+	{calendlyUrl && (
+		<div
+			class="pointer-events-none fixed left-[-9999px] top-0"
+			style="width:400px;height:700px;"
+			aria-hidden="true"
+		>
+			<CalendlyWidget calendlyUrl={calendlyUrl} />
+		</div>
+	)}
+</main>
+
+<style>
+	.mr-cta {
+		animation: mrPulse 3.2s ease-in-out infinite;
+	}
+
+	@keyframes mrPulse {
+		0%, 100% {
+			box-shadow: 0 10px 30px rgba(193, 105, 79, 0.35);
+			transform: scale(1);
+		}
+		50% {
+			box-shadow: 0 14px 40px rgba(193, 105, 79, 0.55);
+			transform: scale(1.02);
+		}
+	}
+</style>

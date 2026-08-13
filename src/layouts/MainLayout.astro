@@ -50,6 +50,7 @@ const enableGoogleTracking = toBoolean(import.meta.env.PUBLIC_ENABLE_GOOGLE_TRAC
     {enableMetaTracking && <MetaPixel />}
     {enableGoogleTracking && <GoogleAdsPixel />}
     <ClarityPixel />
+    <slot name="head" />
   </head>
   <body class="bg-white">
     <TrackingManager

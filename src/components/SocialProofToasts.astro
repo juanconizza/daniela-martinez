@@ -1,0 +1,124 @@
+---
+/**
+ * Notificaciones flotantes tipo "sweet alert" con un número ficticio y
+ * aleatorio de personas viendo la página ahora mismo (prueba social). No usa
+ * la librería SweetAlert2 (evita sumar una dependencia solo para un toast) —
+ * es un componente liviano propio con el mismo estilo visual de tarjeta.
+ */
+interface Props {
+	messageTemplate?: string;
+	minCount?: number;
+	maxCount?: number;
+	firstDelayMs?: number;
+	intervalMs?: number;
+	durationMs?: number;
+}
+
+const {
+	messageTemplate = "{count} personas están viendo esto ahora",
+	minCount = 11,
+	maxCount = 23,
+	firstDelayMs = 4000,
+	intervalMs = 28000,
+	durationMs = 5000,
+} = Astro.props;
+
+const componentId = `social-proof-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div
+	id={componentId}
+	class="social-proof-toast fixed left-3 right-3 bottom-3 md:left-5 md:right-auto md:bottom-5 z-[9999] max-w-sm"
+	data-template={messageTemplate}
+	data-min={minCount}
+	data-max={maxCount}
+	data-first-delay={firstDelayMs}
+	data-interval={intervalMs}
+	data-duration={durationMs}
+	aria-live="polite"
+>
+</div>
+
+<style>
+	.social-proof-toast {
+		pointer-events: none;
+	}
+
+	.social-proof-toast :global(.toast-card) {
+		pointer-events: auto;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		background: #201410;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		color: #f2e6da;
+		padding: 0.75rem 1rem;
+		border-radius: 0.9rem;
+		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+		font-size: 0.85rem;
+		font-weight: 500;
+		transform: translateY(20px);
+		opacity: 0;
+		transition: transform 300ms ease, opacity 300ms ease;
+	}
+
+	.social-proof-toast :global(.toast-card.is-visible) {
+		transform: translateY(0);
+		opacity: 1;
+	}
+
+	.social-proof-toast :global(.toast-dot) {
+		width: 8px;
+		height: 8px;
+		border-radius: 9999px;
+		background: #4ade80;
+		box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+		animation: toastDotPulse 1.6s infinite;
+		flex-shrink: 0;
+	}
+
+	@keyframes toastDotPulse {
+		0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); }
+		70% { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+		100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+	}
+</style>
+
+<script define:vars={{ componentId }}>
+	function setupSocialProofToast() {
+		const root = document.getElementById(componentId);
+		if (!root) return;
+
+		if (root.__toastCleanup) root.__toastCleanup();
+
+		const template = root.getAttribute("data-template") || "{count} personas viendo";
+		const min = parseInt(root.getAttribute("data-min") || "11", 10);
+		const max = parseInt(root.getAttribute("data-max") || "23", 10);
+		const firstDelay = parseInt(root.getAttribute("data-first-delay") || "4000", 10);
+		const interval = parseInt(root.getAttribute("data-interval") || "28000", 10);
+		const duration = parseInt(root.getAttribute("data-duration") || "5000", 10);
+
+		const randomCount = () => Math.floor(Math.random() * (max - min + 1)) + min;
+		const timers = [];
+
+		const showToast = () => {
+			root.innerHTML = "";
+			const card = document.createElement("div");
+			card.className = "toast-card";
+			card.innerHTML = `<span class="toast-dot" aria-hidden="true"></span><span>${template.replace("{count}", String(randomCount()))}</span>`;
+			root.appendChild(card);
+			requestAnimationFrame(() => card.classList.add("is-visible"));
+			timers.push(setTimeout(() => card.classList.remove("is-visible"), duration));
+		};
+
+		timers.push(setTimeout(showToast, firstDelay));
+		const intervalId = setInterval(showToast, interval);
+
+		root.__toastCleanup = () => {
+			clearInterval(intervalId);
+			timers.forEach(clearTimeout);
+		};
+	}
+
+	document.addEventListener("astro:page-load", setupSocialProofToast);
+</script>

@@ -1,0 +1,142 @@
+---
+/**
+ * Video de VSL: se autorreproduce muteado apenas carga la página (como un
+ * video nativo de Instagram/Facebook) y muestra un badge de "bocina apagada"
+ * que invita a hacer click para activar el sonido. A diferencia de
+ * VimeoVideo.astro (que abre un modal), este va embebido directo en la página.
+ */
+interface Props {
+	vimeoUrl: string;
+	class?: string;
+}
+
+const { vimeoUrl, class: className = "" } = Astro.props;
+
+const getVimeoId = (url: string) => {
+	if (!url) return "";
+	const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+	return match?.[1] ?? "";
+};
+
+const vimeoId = getVimeoId(vimeoUrl);
+const playerUrl = vimeoId
+	? `https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=0&playsinline=1&title=0&byline=0&portrait=0&controls=0&dnt=1`
+	: "";
+
+const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div
+	id={componentId}
+	class={`vsl-video relative aspect-[16/9] md:aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)] ${className}`}
+	data-player-url={playerUrl}
+>
+	{vimeoId ? (
+		<>
+			<div class="absolute inset-0" data-frame></div>
+			<button
+				type="button"
+				class="vsl-unmute absolute inset-0 flex items-end justify-center pb-5 md:pb-7 bg-black/10"
+				data-unmute
+				data-track-lead="true"
+				data-track-type="video"
+				data-track-meta-event="ViewContent"
+				data-track-google-event="video_play"
+				data-button-text="Metodo REC - Activar sonido"
+				aria-label="Activar el sonido del video"
+			>
+				<span class="vsl-unmute-badge inline-flex items-center gap-2 rounded-full bg-black/70 backdrop-blur px-4 py-2 text-xs md:text-sm font-semibold text-white">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M11 5 6 9H2v6h4l5 4V5Z"></path>
+						<line x1="23" y1="9" x2="17" y2="15"></line>
+						<line x1="17" y1="9" x2="23" y2="15"></line>
+					</svg>
+					Tocá para activar el sonido
+				</span>
+			</button>
+			<button
+				type="button"
+				class="vsl-fullscreen absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition-colors hover:bg-black/80"
+				data-fullscreen
+				aria-label="Ver en pantalla completa"
+			>
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+					<path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+					<path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+					<path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+				</svg>
+			</button>
+		</>
+	) : (
+		<div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/50 text-sm">
+			<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<polygon points="5 3 19 12 5 21 5 3"></polygon>
+			</svg>
+			Video próximamente
+		</div>
+	)}
+</div>
+
+<style>
+	.vsl-unmute-badge {
+		animation: vslPulse 1.8s ease-in-out infinite;
+	}
+
+	@keyframes vslPulse {
+		0%, 100% { transform: scale(1); }
+		50% { transform: scale(1.05); }
+	}
+
+	.vsl-unmute.is-muted-off {
+		opacity: 0;
+		pointer-events: none;
+	}
+</style>
+
+<script define:vars={{ componentId }}>
+	function setupVslVideo() {
+		const root = document.getElementById(componentId);
+		if (!root) return;
+
+		const frame = root.querySelector("[data-frame]");
+		const playerUrl = root.getAttribute("data-player-url");
+		const unmuteBtn = root.querySelector("[data-unmute]");
+		if (!frame || !playerUrl) return;
+
+		let iframe = frame.querySelector("iframe");
+		if (!iframe) {
+			iframe = document.createElement("iframe");
+			iframe.src = playerUrl;
+			iframe.allow = "autoplay; fullscreen; picture-in-picture";
+			iframe.allowFullscreen = true;
+			iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;";
+			frame.appendChild(iframe);
+		}
+
+		const postToPlayer = (method, value) => {
+			iframe.contentWindow?.postMessage(JSON.stringify({ method, value }), "https://player.vimeo.com");
+		};
+
+		let unmuted = false;
+		const unmute = () => {
+			if (unmuted) return;
+			unmuted = true;
+			postToPlayer("setCurrentTime", 0);
+			postToPlayer("setMuted", false);
+			postToPlayer("play");
+			unmuteBtn?.classList.add("is-muted-off");
+		};
+
+		unmuteBtn?.addEventListener("click", unmute);
+
+		const fullscreenBtn = root.querySelector("[data-fullscreen]");
+		fullscreenBtn?.addEventListener("click", (event) => {
+			event.stopPropagation();
+			if (iframe.requestFullscreen) iframe.requestFullscreen();
+			else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+		});
+	}
+
+	document.addEventListener("astro:page-load", setupVslVideo);
+</script>

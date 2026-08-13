@@ -9,9 +9,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.1.2",
+    "astro": "^7.2.1",
     "autoprefixer": "^10.4.23",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.19"

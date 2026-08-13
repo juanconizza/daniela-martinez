@@ -1,0 +1,32 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import Vsl from '../../sections/metodo-rec/Vsl.astro'
+
+const vimeoUrl = import.meta.env.PUBLIC_METODO_REC_VIMEO_URL ?? ''
+const calendlyUrl = import.meta.env.PUBLIC_CALENDLY_URL ?? ''
+---
+
+<MainLayout
+	title="Método REC | Así dejé de sufrir por amor y recuperé mi paz"
+	description="Descubrí cómo dejar de sufrir por amor y recuperar tu paz en menos de 90 días. Mirá el video completo y agendá tu cita gratuita."
+	keywords="dejar de sufrir por amor, recuperar la paz, apego, relaciones tóxicas, coaching para mujeres"
+>
+	<Fragment slot="head">
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+			rel="stylesheet"
+		/>
+
+		<!-- Precarga de Calendly: el CTA lleva a /metodo-rec/agendar (con recarga
+		completa), así que precalentamos DNS/TLS para que no demore al llegar.
+		(Sin rel=preload del script: su CORS con assets.calendly.com no matchea
+		el modo con el que el <script src> real lo pide y el navegador lo tira). -->
+		<link rel="preconnect" href="https://calendly.com" />
+		<link rel="preconnect" href="https://assets.calendly.com" />
+		<link rel="prefetch" href="/metodo-rec/agendar" />
+	</Fragment>
+
+	<Vsl vimeoUrl={vimeoUrl} calendlyUrl={calendlyUrl} spotsLeft={4} />
+</MainLayout>

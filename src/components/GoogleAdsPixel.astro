@@ -38,9 +38,9 @@ const shouldLoadGooglePixel = Boolean(gtagLoaderId && enableGoogleTracking);
 				}
 				if (ga4Id) {
 					// send_page_view:false porque el pageview de GA4 se dispara a mano en
-					// cada astro:page-load (ver trackPageView en trackingClient.js) — con
-					// ClientRouter, el auto-pageview de gtag solo dispararía en la carga
-					// inicial, no en navegaciones internas.
+					// cada astro:page-load, INCLUIDA la carga inicial (ver trackPageView
+					// en trackingClient.js) — si no, este auto-pageview del config
+					// duplicaría el nuestro en esa primera carga.
 					gtag('config', ga4Id, { send_page_view: false });
 				}
 			</script>

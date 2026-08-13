@@ -483,30 +483,33 @@ function trackFormSubmit(form, config) {
  * <head>, que con SPA routing no está garantizado que se re-ejecute).
  *
  * @param {boolean} isInitialLoad true solo en el primer astro:page-load de la
- * sesión — GA4 y Google Ads lo usan para no duplicar el page_view/hit
- * automático que cada uno manda solo (ver el guard más abajo); Meta lo
- * ignora, se manda siempre.
+ * sesión — lo usa Google Ads para no duplicar el hit de remarketing
+ * automático que manda solo en esa primera carga (ver el guard más abajo).
+ * GA4 y Meta lo ignoran, se mandan siempre.
  */
 function trackPageView(config, isInitialLoad) {
-  // GA4 Enhanced Measurement ya manda su propio page_view automático en la
-  // carga inicial de cada sesión (no se puede desactivar desde GA4 — ver
-  // comentario en GoogleAdsPixel.astro) — evitamos duplicarlo ahí, no
-  // mandando el nuestro en esa primera carga. Google Ads tiene el mismo
-  // problema al revés: gtag('config', googleAdsId) SÍ manda su propio
-  // page_view de remarketing en la carga inicial (a diferencia de GA4, ese
-  // config no tiene send_page_view:false), pero como vive en <head> y no se
-  // re-ejecuta en navegaciones SPA, ese auto-hit también queda limitado a la
-  // primera página. En ambos casos mandamos el nuestro SOLO en navegaciones
-  // SPA subsiguientes — la carga inicial ya está cubierta por el auto-hit de
-  // cada uno. Meta (Pixel) no tiene este problema en la carga inicial, así
-  // que este guard es específico de Google (GA4 + Ads).
-  if (!isInitialLoad && config.enableGoogleTracking) {
+  if (config.enableGoogleTracking) {
     const pageViewParams = { page_location: window.location.href, page_title: document.title };
 
+    // GA4: se manda siempre, también en la carga inicial. En teoría "Enhanced
+    // Measurement" de GA4 ya manda su propio page_view automático en esa
+    // primera carga, pero eso depende de una config del lado de GA4 que no
+    // controlamos desde acá (si está apagada, ese primer page_view se pierde
+    // del todo) — mandarlo siempre a mano es lo único confiable. Si GA4 tiene
+    // Enhanced Measurement activo vas a ver el page_view de la carga inicial
+    // duplicado (uno de cada lado); en ese caso, en GA4 Admin → Flujos de
+    // datos → Web → engranaje de "Vistas de página" desactivá el evento
+    // automático de page_view (dejando el resto de Enhanced Measurement
+    // intacto) para quedarte solo con el nuestro.
     if (config.ga4Id) {
       sendGoogleEvent("page_view", { ...pageViewParams, send_to: config.ga4Id });
     }
-    if (config.googleAdsId) {
+
+    // Google Ads: gtag('config', googleAdsId) en <head> (sin send_page_view
+    // false) SÍ manda su propio hit de remarketing en la carga inicial, así
+    // que acá solo mandamos el nuestro en navegaciones SPA subsiguientes
+    // (ese script no se re-ejecuta con ClientRouter).
+    if (!isInitialLoad && config.googleAdsId) {
       sendGoogleEvent("page_view", { ...pageViewParams, send_to: config.googleAdsId });
     }
   }

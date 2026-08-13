@@ -173,26 +173,26 @@ solo de los dos, o ambos a la vez. `GoogleAdsPixel.astro` carga el script de `gt
 cualquiera de los dos ids que exista, y configura los que estén presentes.
 
 - **PageView**: `trackPageView` (en `astro:page-load`) dispara un `page_view` manual de GA4 con
-  `send_to: config.ga4Id`. El `gtag('config', ga4Id, ...)` en `GoogleAdsPixel.astro` se inicializa
-  con `send_page_view: false` a propósito — si no, el auto-pageview de gtag solo dispararía en la
-  carga inicial (no en cada navegación de `<ClientRouter />`), y además duplicaría el manual.
+  `send_to: config.ga4Id` en TODAS las cargas, incluida la inicial. El `gtag('config', ga4Id, ...)`
+  en `GoogleAdsPixel.astro` se inicializa con `send_page_view: false` a propósito, para que el
+  auto-pageview del propio `config` no duplique este manual en esa primera carga.
   - **Enhanced Measurement de GA4** (Admin → Flujos de datos → Web → engranaje junto a "Vistas de
-    página") manda SU PROPIO `page_view` automático, aparte de `gtag('config', ...)`. Tiene dos partes:
-    el sub-toggle "Cambios de página según eventos del historial del navegador" (desactivalo desde la
-    UI de GA4 — soluciona el duplicado en navegaciones SPA) y el toggle padre "Vistas de página" (NO
-    se puede desactivar desde la UI, y sigue mandando su propio `page_view` en la carga INICIAL de
-    cada sesión sin importar `send_page_view:false`). Por eso `trackPageView(config, isInitialLoad)`
-    NO manda su `page_view` de GA4 cuando `isInitialLoad` es `true` — evita duplicar ese automático
-    que no se puede apagar. En navegaciones SPA sí lo manda (ahí Enhanced Measurement ya está
-    desactivado vía el sub-toggle). Este guard es específico de Google (GA4 + Ads, ver abajo) — Meta
-    no lo necesita, su PageView se manda siempre, en todas las cargas.
-  - **Google Ads** tiene el problema inverso: `gtag('config', googleAdsId)` en `GoogleAdsPixel.astro`
-    SÍ manda su propio hit de remarketing (`page_view`) en la carga inicial (a diferencia del config
-    de GA4, no lleva `send_page_view:false`) — pero como ese script vive en `<head>` y no se
-    re-ejecuta en navegaciones SPA, ese auto-hit también queda limitado a la primera página. Mismo
-    guard `!isInitialLoad`, mismo `trackPageView`: en cada navegación SPA se manda un `page_view`
-    explícito con `send_to: config.googleAdsId` además del de GA4 — así Google Ads también se entera
-    de las navegaciones internas para remarketing/audiencias, no solo de la primera página vista.
+    página") puede mandar SU PROPIO `page_view` automático en la carga inicial, aparte de
+    `gtag('config', ...)` — pero eso depende de una config del lado de GA4 que este código no
+    controla (si el toggle de "Vistas de página" está apagado ahí, ese `page_view` automático nunca
+    llega). Por eso `trackPageView` no confía en él y manda el suyo siempre, también en
+    `isInitialLoad`. Si en tu propiedad de GA4 Enhanced Measurement SÍ está activo vas a ver el
+    `page_view` de la carga inicial duplicado (uno de cada lado) — en ese caso, desactivá el
+    sub-evento automático de `page_view` desde ese mismo engranaje (dejando el resto de Enhanced
+    Measurement intacto) para quedarte solo con el manual. Meta (Pixel) no tiene este problema, su
+    PageView se manda siempre, en todas las cargas.
+  - **Google Ads** es distinto: `gtag('config', googleAdsId)` en `GoogleAdsPixel.astro` SÍ manda su
+    propio hit de remarketing (`page_view`) de forma confiable en la carga inicial (no lleva
+    `send_page_view:false`) — pero como ese script vive en `<head>` y no se re-ejecuta en
+    navegaciones SPA, ese auto-hit queda limitado a la primera página. Por eso `trackPageView` SÍ
+    guarda `!isInitialLoad` para Google Ads específicamente: en cada navegación SPA manda un
+    `page_view` explícito con `send_to: config.googleAdsId` — así Google Ads también se entera de
+    las navegaciones internas para remarketing/audiencias, sin duplicar la primera página vista.
 - **Conversiones**: cada evento de un botón/formulario se manda con un `gtag('event', ...)` **por
   destino** (`sendGoogleConversionEvents` en `trackingClient.js`) — uno con `send_to` la conversión
   de Google Ads (si el botón matchea una `key` en `PUBLIC_GOOGLE_ADS_CONVERSIONS`) y otro con

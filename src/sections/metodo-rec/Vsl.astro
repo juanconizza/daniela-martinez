@@ -1,7 +1,7 @@
 ---
 import VslVideo from '../../components/VslVideo.astro'
 import SocialProofToasts from '../../components/SocialProofToasts.astro'
-import CalendlyWidget from '../../components/CalendlyWidget.astro'
+import CalendlyCard from '../../components/CalendlyCard.astro'
 
 interface Props {
 	vimeoUrl: string;
@@ -58,11 +58,19 @@ const { vimeoUrl, calendlyUrl, spotsLeft = 4 } = Astro.props;
 
 	{calendlyUrl && (
 		<div
-			class="pointer-events-none fixed left-[-9999px] top-0"
-			style="width:400px;height:700px;"
+			class="pointer-events-none fixed left-[-9999px] top-0 w-screen"
 			aria-hidden="true"
 		>
-			<CalendlyWidget calendlyUrl={calendlyUrl} />
+			{/* Mismas clases de ancho que la tarjeta real en /metodo-rec/agendar
+			(mx-auto max-w-3xl + el px-5 del <main> de ahí) — si no matchean,
+			Calendly recalcula su layout al aterrizar con el ancho real y se nota
+			un salto/vacío momentáneo. Con position:fixed (no height:0) el
+			contenedor tiene tamaño real aunque esté fuera de pantalla, así
+			Calendly llega a renderizar el contenido completo mientras precarga
+			en vez de quedarse colapsado. */}
+			<div class="mx-auto max-w-3xl px-5">
+				<CalendlyCard calendlyUrl={calendlyUrl} />
+			</div>
 		</div>
 	)}
 </main>

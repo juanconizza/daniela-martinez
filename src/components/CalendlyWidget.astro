@@ -10,6 +10,14 @@
  * Calendly. Esto requiere que el link que lleva a /agendar NO tenga
  * data-astro-reload (eso forzaría una recarga completa del navegador, que
  * destruye cualquier estado sin importar qué tan precargado esté).
+ *
+ * Calendly solo termina de renderizar su contenido real (y manda una altura
+ * real por postMessage) una vez que su iframe queda VISIBLE en pantalla —
+ * aunque lo precarguemos fuera de la pantalla con tamaño real, tarda uno o
+ * dos segundos en terminar de dibujarse recién cuando se revela. Por eso el
+ * widget arranca oculto (opacity:0) con un skeleton de carga encima, y recién
+ * se revela cuando llega una altura real (no la mini altura transitoria que
+ * manda mientras se está reacomodando).
  */
 interface Props {
 	calendlyUrl: string;
@@ -29,35 +37,60 @@ const calendlyEmbedUrl = buildCalendlyEmbedUrl(calendlyUrl);
 ---
 
 {calendlyUrl && (
-	<div
-		id="calendly-widget"
-		class="calendly-inline-widget"
-		data-url={calendlyEmbedUrl}
-		style="width:100%;height:100%;min-width:280px;"
-		transition:persist="calendly-widget"
-	>
-	</div>
+	<>
+		<div
+			id="calendly-widget"
+			class="calendly-inline-widget is-loading"
+			data-url={calendlyEmbedUrl}
+			style="width:100%;height:100%;min-width:280px;"
+			transition:persist="calendly-widget"
+			transition:animate="none"
+		>
+		</div>
+		<div class="calendly-skeleton absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#f5ece3]" data-skeleton>
+			<span class="calendly-spinner" aria-hidden="true"></span>
+			<span class="text-sm font-medium text-[#8a6a52]">Cargando calendario…</span>
+		</div>
+	</>
 )}
 
 <script is:inline src="https://assets.calendly.com/assets/external/widget.js"></script>
 <script is:inline>
 	// @ts-nocheck
-	// Calendly manda su altura real por postMessage — la usamos para que el
-	// widget crezca a esa altura y no le quede scroll interno.
 	function setupCalendlyResize() {
 		const widget = document.getElementById("calendly-widget");
 		if (!widget) return;
 
+		const skeleton = widget.parentElement?.querySelector("[data-skeleton]");
+
 		// El div puede llegar ya con un listener registrado desde antes (si
 		// persistió de /metodo-rec) — se limpia para no duplicarlo.
 		if (widget.__calendlyCleanup) widget.__calendlyCleanup();
+
+		// Si ya se había revelado antes de este setup (persistido desde
+		// /metodo-rec con el skeleton ya sacado), no hay que volver a taparlo.
+		let settled = !widget.classList.contains("is-loading");
+
+		const reveal = () => {
+			if (settled) return;
+			settled = true;
+			widget.classList.remove("is-loading");
+			skeleton?.classList.add("is-hidden");
+		};
 
 		const onMessage = (event) => {
 			if (event.origin !== "https://calendly.com") return;
 			if (event.data?.event !== "calendly.page_height") return;
 			// Calendly ya manda el valor con "px" incluido (ej. "1159px")
 			const height = event.data.payload?.height;
-			if (height) widget.style.height = String(height).includes("px") ? String(height) : `${height}px`;
+			if (!height) return;
+			widget.style.height = String(height).includes("px") ? String(height) : `${height}px`;
+
+			// Mientras se reacomoda al tamaño real manda alturas mini de sobra
+			// (2px, 26px) — solo consideramos "listo" una altura de calendario
+			// real, si no el skeleton se saca antes de tiempo y se ve roto.
+			const numericHeight = parseInt(height, 10);
+			if (numericHeight >= 150) reveal();
 		};
 
 		window.addEventListener("message", onMessage);
@@ -66,3 +99,35 @@ const calendlyEmbedUrl = buildCalendlyEmbedUrl(calendlyUrl);
 
 	document.addEventListener("astro:page-load", setupCalendlyResize);
 </script>
+
+<style>
+	.calendly-inline-widget.is-loading {
+		opacity: 0;
+	}
+
+	.calendly-inline-widget {
+		transition: opacity 300ms ease;
+	}
+
+	.calendly-skeleton {
+		transition: opacity 300ms ease;
+		pointer-events: none;
+	}
+
+	.calendly-skeleton.is-hidden {
+		opacity: 0;
+	}
+
+	.calendly-spinner {
+		width: 28px;
+		height: 28px;
+		border-radius: 9999px;
+		border: 3px solid rgba(193, 105, 79, 0.25);
+		border-top-color: #c1694f;
+		animation: calendlySpin 800ms linear infinite;
+	}
+
+	@keyframes calendlySpin {
+		to { transform: rotate(360deg); }
+	}
+</style>

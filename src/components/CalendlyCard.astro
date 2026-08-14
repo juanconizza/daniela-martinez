@@ -1,0 +1,22 @@
+---
+/**
+ * Tarjeta visual (marco color hueso) que envuelve al CalendlyWidget. Vive
+ * aparte para que /metodo-rec (precarga oculta) y /metodo-rec/agendar
+ * (visible) usen EXACTAMENTE las mismas clases de ancho — si no matchean
+ * pixel a pixel, Calendly recalcula su layout interno al aterrizar en
+ * /agendar (ahí sí ya con el ancho real) y se ve un salto/achicamiento
+ * momentáneo mientras se reacomoda.
+ */
+import CalendlyWidget from './CalendlyWidget.astro';
+
+interface Props {
+	calendlyUrl: string;
+}
+
+const { calendlyUrl } = Astro.props;
+---
+
+<div class="relative overflow-hidden rounded-2xl" style="min-width:320px;min-height:600px;">
+	<CalendlyWidget calendlyUrl={calendlyUrl} />
+</div>
+

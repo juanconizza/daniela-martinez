@@ -1,16 +1,27 @@
 ---
 /**
- * Video de VSL: se autorreproduce muteado apenas carga la página (como un
- * video nativo de Instagram/Facebook) y muestra un badge de "bocina apagada"
- * que invita a hacer click para activar el sonido. A diferencia de
- * VimeoVideo.astro (que abre un modal), este va embebido directo en la página.
+ * Video de VSL con carga en dos capas para que se sienta instantáneo:
+ *
+ *  1. Un <video> local (mp4 muteado, corto, liviano) con los primeros
+ *     segundos reales se autorreproduce en loop apenas carga la página — es
+ *     same-origin, así que pinta al instante, sin esperar a Vimeo.
+ *  2. En simultáneo, el iframe real de Vimeo se crea y empieza a cargar
+ *     oculto detrás. Cuando el visitante clickea "activar sonido": si Vimeo
+ *     ya avisó por postMessage que está "ready", se revela al instante
+ *     (arranca desde el segundo 0, con sonido); si todavía no cargó, el
+ *     placeholder se queda loopeando (nunca se congela) y el swap se hace
+ *     solo apenas Vimeo esté listo.
+ *
+ * A diferencia de VimeoVideo.astro (que abre un modal), este va embebido
+ * directo en la página.
  */
 interface Props {
 	vimeoUrl: string;
+	placeholderSrc?: string;
 	class?: string;
 }
 
-const { vimeoUrl, class: className = "" } = Astro.props;
+const { vimeoUrl, placeholderSrc = "/videos/metodo-rec-preview.mp4", class: className = "" } = Astro.props;
 
 const getVimeoId = (url: string) => {
 	if (!url) return "";
@@ -20,7 +31,7 @@ const getVimeoId = (url: string) => {
 
 const vimeoId = getVimeoId(vimeoUrl);
 const playerUrl = vimeoId
-	? `https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=0&playsinline=1&title=0&byline=0&portrait=0&controls=0&dnt=1`
+	? `https://player.vimeo.com/video/${vimeoId}?autoplay=1&muted=1&loop=0&playsinline=1&title=0&byline=0&portrait=0&controls=0&dnt=1&api=1`
 	: "";
 
 const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
@@ -33,7 +44,17 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 >
 	{vimeoId ? (
 		<>
-			<div class="absolute inset-0" data-frame></div>
+			<video
+				class="vsl-placeholder absolute inset-0 h-full w-full object-cover"
+				data-placeholder
+				src={placeholderSrc}
+				autoplay
+				muted
+				loop
+				playsinline
+				preload="auto"
+			></video>
+			<div class="vsl-frame absolute inset-0 opacity-0" data-frame></div>
 			<button
 				type="button"
 				class="vsl-unmute absolute inset-0 flex items-end justify-center pb-5 md:pb-7 bg-black/10"
@@ -92,6 +113,19 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 		opacity: 0;
 		pointer-events: none;
 	}
+
+	.vsl-placeholder,
+	.vsl-frame {
+		transition: opacity 200ms ease;
+	}
+
+	.vsl-placeholder.is-swapped {
+		opacity: 0;
+	}
+
+	.vsl-frame.is-swapped {
+		opacity: 1;
+	}
 </style>
 
 <script define:vars={{ componentId }}>
@@ -102,6 +136,7 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 		const frame = root.querySelector("[data-frame]");
 		const playerUrl = root.getAttribute("data-player-url");
 		const unmuteBtn = root.querySelector("[data-unmute]");
+		const placeholder = root.querySelector("[data-placeholder]");
 		if (!frame || !playerUrl) return;
 
 		let iframe = frame.querySelector("iframe");
@@ -118,14 +153,57 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			iframe.contentWindow?.postMessage(JSON.stringify({ method, value }), "https://player.vimeo.com");
 		};
 
+		// El player de Vimeo avisa por postMessage cuando terminó de inicializar
+		// y ya acepta comandos (setCurrentTime/setMuted/play) — mandarlos antes
+		// puede no tener efecto, por eso esperamos este evento en vez de asumir
+		// que ya está listo apenas se crea el iframe.
+		let vimeoReady = false;
+		let playRequested = false;
+		let revealed = false;
+		let fallbackTimer = null;
+
+		const revealVimeo = () => {
+			if (revealed) return;
+			revealed = true;
+			if (fallbackTimer) clearTimeout(fallbackTimer);
+			postToPlayer("setCurrentTime", 0);
+			postToPlayer("setMuted", false);
+			postToPlayer("play");
+			placeholder?.classList.add("is-swapped");
+			frame.classList.add("is-swapped");
+			placeholder?.pause?.();
+		};
+
+		const onPlayerMessage = (event) => {
+			if (event.origin !== "https://player.vimeo.com") return;
+			let data;
+			try {
+				data = JSON.parse(event.data);
+			} catch {
+				return;
+			}
+			if (data.event !== "ready") return;
+			vimeoReady = true;
+			if (playRequested) revealVimeo();
+		};
+
+		if (root.__vslMessageCleanup) root.__vslMessageCleanup();
+		window.addEventListener("message", onPlayerMessage);
+		root.__vslMessageCleanup = () => window.removeEventListener("message", onPlayerMessage);
+
 		let unmuted = false;
 		const unmute = () => {
 			if (unmuted) return;
 			unmuted = true;
-			postToPlayer("setCurrentTime", 0);
-			postToPlayer("setMuted", false);
-			postToPlayer("play");
 			unmuteBtn?.classList.add("is-muted-off");
+			playRequested = true;
+			// Si Vimeo ya está listo, se revela al toque; si no, el placeholder
+			// se queda loopeando y revealVimeo() se dispara solo desde
+			// onPlayerMessage apenas llegue el "ready". Si por lo que sea el
+			// "ready" no llega nunca (red lenta, mensaje perdido), no dejamos a
+			// la visitante trabada mirando el placeholder para siempre.
+			if (vimeoReady) revealVimeo();
+			else fallbackTimer = setTimeout(revealVimeo, 4000);
 		};
 
 		unmuteBtn?.addEventListener("click", unmute);

@@ -2,11 +2,21 @@
 {"message":"Generated 0ms","label":"types","level":"info"}
 {"message":"connected.","label":"vite","level":"info"}
 {"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
-{"message":" astro  v7.2.1 ready in 1339 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
+{"message":" astro  v7.2.1 ready in 1434 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
 {"message":"watching for file changes...","label":null,"level":"info"}
-{"message":"[200] / 21ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec 14ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 13ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 27ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 9ms","label":null,"level":"info"}
 {"message":"dependencies optimized: astro/virtual-modules/transitions-events.js, astro/virtual-modules/transitions-router.js, astro/virtual-modules/transitions-swap-functions.js, astro/virtual-modules/transitions-types.js","label":"vite","level":"info"}
-{"message":"[200] /metodo-rec 6ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 3ms","label":null,"level":"info"}
+{"message":"[200] / 14ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 21ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 17ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 7ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 18ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 7ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 11ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 29ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 10ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 9ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 4ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 3ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 2ms","label":null,"level":"info"}

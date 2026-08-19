@@ -174,6 +174,26 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 		let revealed = false;
 		let fallbackTimer = null;
 
+		// El video de Vimeo se autorreproduce muteado de fondo desde que carga
+		// la página (para estar listo apenas se lo pida) — eso dispara su
+		// propio evento "play" real UNA vez, sin que nadie haya tocado nada.
+		// Por eso el swap NO puede colgarse del evento "play" del SDK (dispara
+		// también con el autoplay de fondo) — se hace solo y únicamente acá
+		// adentro, en el click. El pequeño delay le da tiempo a Vimeo a
+		// terminar el seek + arrancar a reproducir sin sonido desde la
+		// posición correcta antes de mostrarlo, para que no se note el poster
+		// estático de Vimeo un instante antes de la reproducción real.
+		const swapToVimeo = () => {
+			if (iframe.__vslSwapped) return;
+			iframe.__vslSwapped = true;
+			placeholder?.classList.add("is-swapped");
+			frame.classList.add("is-swapped");
+			placeholder?.pause?.();
+			// Después de que termina el fade (200ms, ver CSS) lo saca del todo
+			// del DOM — no se queda ni pausado de fondo ni pudiendo asomar.
+			setTimeout(() => placeholder?.remove(), 250);
+		};
+
 		const revealVimeo = () => {
 			if (revealed) return;
 			revealed = true;
@@ -186,9 +206,7 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			player.setMuted(false).catch(() => {});
 			player.play().catch(() => {});
 
-			placeholder?.classList.add("is-swapped");
-			frame.classList.add("is-swapped");
-			placeholder?.pause?.();
+			setTimeout(swapToVimeo, 350);
 		};
 
 		// Guarda el progreso cada pocos segundos (timeupdate dispara varias

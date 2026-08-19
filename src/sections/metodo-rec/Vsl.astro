@@ -13,6 +13,17 @@ const { vimeoUrl, calendlyUrl, spotsLeft = 4 } = Astro.props;
 ---
 
 <main class="metodo-rec relative min-h-screen overflow-hidden bg-[#150d0a] font-text text-[#f2e6da]">
+	<div class="marquee-bar overflow-hidden bg-[#c0392b] py-2 md:hidden" aria-hidden="false">
+		<div class="marquee-track flex whitespace-nowrap">
+			<span class="marquee-item px-4 text-xs font-bold uppercase tracking-widest text-white">
+				Entrenamiento exclusivo para mujeres
+			</span>
+			<span class="marquee-item px-4 text-xs font-bold uppercase tracking-widest text-white" aria-hidden="true">
+				Entrenamiento exclusivo para mujeres
+			</span>
+		</div>
+	</div>
+
 	<div
 		class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(193,105,79,0.25),_transparent_60%)]"
 		aria-hidden="true"
@@ -20,14 +31,14 @@ const { vimeoUrl, calendlyUrl, spotsLeft = 4 } = Astro.props;
 	</div>
 
 	<section class="relative z-10 mx-auto max-w-3xl px-5 pb-20 pt-14 text-center md:pt-20">
-		<p class="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#d8a06a] md:text-xs">
+		<p class="mb-4 hidden text-[11px] font-semibold uppercase tracking-[0.25em] text-[#d8a06a] md:block md:text-lg">
 			Entrenamiento exclusivo para mujeres
 		</p>
 
 		<h1 class="mb-3 font-display text-[clamp(1.8rem,5vw,3.25rem)] leading-[1.15] text-white">
-			Así dejé de sufrir por amor<br class="hidden md:block" /> y recuperé mi paz
+			Así dejé de sufrir por amor y<br class="hidden md:block" /> <span class="text-[#f2c94c] underline decoration-2 underline-offset-4">recuperé mi paz</span>
 		</h1>
-		<p class="md:mb-10 mb-5 font-display text-[clamp(1.25rem,3vw,1.75rem)] italic text-[#d8a06a]">
+		<p class="md:mb-10 mb-5 font-display text-[clamp(1.25rem,3vw,1.75rem)] text-[#d8a06a]">
 			En menos de 90 días
 		</p>
 
@@ -76,6 +87,16 @@ const { vimeoUrl, calendlyUrl, spotsLeft = 4 } = Astro.props;
 </main>
 
 <style>
+	.marquee-track {
+		width: max-content;
+		animation: marqueeScroll 12s linear infinite;
+	}
+
+	@keyframes marqueeScroll {
+		from { transform: translateX(0); }
+		to { transform: translateX(-50%); }
+	}
+
 	.mr-cta {
 		animation: mrPulse 3.2s ease-in-out infinite;
 	}

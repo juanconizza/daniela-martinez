@@ -2,25 +2,11 @@
 {"message":"Generated 0ms","label":"types","level":"info"}
 {"message":"connected.","label":"vite","level":"info"}
 {"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
-{"message":" astro  v7.2.1 ready in 1381 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
+{"message":" astro  v7.2.1 ready in 1339 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
 {"message":"watching for file changes...","label":null,"level":"info"}
-{"message":"[200] / 22ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec 16ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 14ms","label":null,"level":"info"}
+{"message":"[200] / 21ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 14ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 13ms","label":null,"level":"info"}
 {"message":"dependencies optimized: astro/virtual-modules/transitions-events.js, astro/virtual-modules/transitions-router.js, astro/virtual-modules/transitions-swap-functions.js, astro/virtual-modules/transitions-types.js","label":"vite","level":"info"}
-{"message":"[console.warn] [Meta Pixel] - Multiple pixels with conflicting versions were detected on this page.","label":"vite","level":"warn"}
-{"message":"[Unhandled error] Error: Script error.\n > ../../../../../../../../../../../../@vite/client:531:50\n","label":"vite","level":"error"}
-{"message":"[200] /metodo-rec/agendar 8ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec 8ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 2ms","label":null,"level":"info"}
-{"message":"[console.warn] [Meta Pixel] - Multiple pixels with conflicting versions were detected on this page.","label":"vite","level":"warn"}
-{"message":"[Unhandled error] Error: Script error.\n > ../../../../../../../../../../../../@vite/client:531:50\n","label":"vite","level":"error"}
+{"message":"[200] /metodo-rec 6ms","label":null,"level":"info"}
 {"message":"[200] /metodo-rec/agendar 3ms","label":null,"level":"info"}
-{"message":".env changed, restarting server...","label":"vite","level":"info"}
-{"message":"connected.","label":"vite","level":"info"}
-{"message":"connected.","label":"vite","level":"info"}
-{"message":"server restarted.","label":"vite","level":"info"}
-{"message":".env changed, restarting server...","label":"vite","level":"info"}
-{"message":"connected.","label":"vite","level":"info"}
-{"message":"connected.","label":"vite","level":"info"}
-{"message":"server restarted.","label":"vite","level":"info"}

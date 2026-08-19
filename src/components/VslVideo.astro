@@ -192,6 +192,20 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			// Después de que termina el fade (200ms, ver CSS) lo saca del todo
 			// del DOM — no se queda ni pausado de fondo ni pudiendo asomar.
 			setTimeout(() => placeholder?.remove(), 250);
+
+			// El player de Vimeo estuvo reproduciendo oculto (opacity:0) de
+			// fondo y no siempre termina de recalcular su tamaño interno al
+			// hacerse visible — quedan franjas finitas sin cubrir en los bordes
+			// (se nota entrando y saliendo de pantalla completa, que sí fuerza
+			// ese recálculo). Un cambio de tamaño real, aunque sea mínimo,
+			// dispara el mismo recálculo sin que haga falta el fullscreen.
+			requestAnimationFrame(() => {
+				iframe.style.width = "99.9%";
+				requestAnimationFrame(() => {
+					iframe.style.width = "100%";
+					window.dispatchEvent(new Event("resize"));
+				});
+			});
 		};
 
 		const revealVimeo = () => {

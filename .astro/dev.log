@@ -2,16 +2,11 @@
 {"message":"Generated 0ms","label":"types","level":"info"}
 {"message":"connected.","label":"vite","level":"info"}
 {"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
-{"message":" astro  v7.2.1 ready in 518 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
+{"message":" astro  v7.2.1 ready in 676 ms\n┃ Local    http://localhost:4321/\n┃ Network  use --host to expose","label":"SKIP_FORMAT","level":"info"}
 {"message":"watching for file changes...","label":null,"level":"info"}
-{"message":"[200] / 9ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec 10ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 7ms","label":null,"level":"info"}
+{"message":"[200] / 10ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec 7ms","label":null,"level":"info"}
+{"message":"[200] /metodo-rec/agendar 6ms","label":null,"level":"info"}
 {"message":"dependencies optimized: astro/virtual-modules/transitions-events.js, astro/virtual-modules/transitions-router.js, astro/virtual-modules/transitions-swap-functions.js, astro/virtual-modules/transitions-types.js","label":"vite","level":"info"}
-{"message":"[200] /metodo-rec 2ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 3ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec 5ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 3ms","label":null,"level":"info"}
 {"message":"[200] /metodo-rec 1ms","label":null,"level":"info"}
-{"message":"[200] /metodo-rec/agendar 1ms","label":null,"level":"info"}
 {"message":"[200] /metodo-rec/agendar 1ms","label":null,"level":"info"}

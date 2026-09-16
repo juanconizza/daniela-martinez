@@ -13,10 +13,22 @@ const vimeoUrl = import.meta.env.PUBLIC_METODO_REC_VIMEO_URL ?? ''
 	<Fragment slot="head">
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- Carga el CSS de Playfair Display sin bloquear el render: se pide con
+		media="print" (no aplica de entrada) y el onload lo pasa a "all" apenas
+		llega — mismo patrón que recomienda PageSpeed para hojas de estilo de
+		terceros. El <noscript> es el fallback si JS está desactivado. -->
 		<link
 			href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
 			rel="stylesheet"
+			media="print"
+			onload="this.media='all'"
 		/>
+		<noscript>
+			<link
+				href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+				rel="stylesheet"
+			/>
+		</noscript>
 
 		<!-- El widget de Calendly (+ Stripe/reCAPTCHA que trae) ya NO se precarga
 		acá — pesaba ~2.6MB de fondo para el 100% de las visitas, la mayoría

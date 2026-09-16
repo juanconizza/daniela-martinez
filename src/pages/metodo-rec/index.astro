@@ -3,7 +3,6 @@ import MainLayout from '../../layouts/MainLayout.astro'
 import Vsl from '../../sections/metodo-rec/Vsl.astro'
 
 const vimeoUrl = import.meta.env.PUBLIC_METODO_REC_VIMEO_URL ?? ''
-const calendlyUrl = import.meta.env.PUBLIC_CALENDLY_URL ?? ''
 ---
 
 <MainLayout
@@ -19,14 +18,14 @@ const calendlyUrl = import.meta.env.PUBLIC_CALENDLY_URL ?? ''
 			rel="stylesheet"
 		/>
 
-		<!-- Precarga de Calendly: el CTA lleva a /metodo-rec/agendar (con recarga
-		completa), así que precalentamos DNS/TLS para que no demore al llegar.
-		(Sin rel=preload del script: su CORS con assets.calendly.com no matchea
-		el modo con el que el <script src> real lo pide y el navegador lo tira). -->
+		<!-- El widget de Calendly (+ Stripe/reCAPTCHA que trae) ya NO se precarga
+		acá — pesaba ~2.6MB de fondo para el 100% de las visitas, la mayoría
+		sin llegar a agendar. Estos hints son gratis (no bajan contenido, solo
+		DNS/TLS) y siguen agilizando el click real a /metodo-rec/agendar. -->
 		<link rel="preconnect" href="https://calendly.com" />
 		<link rel="preconnect" href="https://assets.calendly.com" />
 		<link rel="prefetch" href="/metodo-rec/agendar" />
 	</Fragment>
 
-	<Vsl vimeoUrl={vimeoUrl} calendlyUrl={calendlyUrl} spotsLeft={4} />
+	<Vsl vimeoUrl={vimeoUrl} spotsLeft={4} />
 </MainLayout>

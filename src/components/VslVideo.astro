@@ -5,12 +5,14 @@
  *  1. Un <video> local (mp4 muteado, corto, liviano) con los primeros
  *     segundos reales se autorreproduce en loop apenas carga la página — es
  *     same-origin, así que pinta al instante, sin esperar a Vimeo.
- *  2. En simultáneo, el iframe real de Vimeo se crea y empieza a cargar
- *     oculto detrás. Cuando el visitante clickea "activar sonido" (o
- *     "pantalla completa"): si Vimeo ya está listo, se revela al instante
- *     (retomando desde el último segundo visto, si lo hay); si todavía no
- *     cargó, el placeholder se queda loopeando (nunca se congela) y el swap
- *     se hace solo apenas Vimeo esté listo.
+ *  2. El iframe real de Vimeo NO se crea hasta el click en "activar sonido"
+ *     (o "pantalla completa") — antes se creaba oculto desde que cargaba la
+ *     página, reproduciendo video real de fondo desde el primer segundo, lo
+ *     que pesaba la carga inicial para el 100% de las visitas (incluidas las
+ *     que rebotan sin tocar nada) a cambio de un swap un poco más instantáneo
+ *     para quienes sí llegan a tocar. Ahora, al hacer click: si Vimeo carga
+ *     rápido, el swap se siente casi instantáneo igual; si tarda, se ve la
+ *     animación de carga en vez de dejar el placeholder solo sin feedback.
  *
  * Usa el SDK oficial de Vimeo (player.js) en vez de armar los mensajes de
  * postMessage a mano — Vimeo mezcla formatos (el handshake inicial viaja
@@ -51,7 +53,7 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 	id={componentId}
 	class={`vsl-video relative aspect-[16/9] md:aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.5)] ${className}`}
 	data-player-url={playerUrl}
-	data-vimeo-id={vimeoId}
+	data-vsl-vimeo-id={vimeoId}
 >
 	{vimeoId ? (
 		<>
@@ -99,6 +101,10 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 					<path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
 				</svg>
 			</button>
+			<div class="vsl-loading absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40" data-loading aria-hidden="true">
+				<span class="vsl-spinner" aria-hidden="true"></span>
+				<span class="text-xs font-medium text-white/90 md:text-sm">Cargando video…</span>
+			</div>
 		</>
 	) : (
 		<div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/50 text-sm">
@@ -139,6 +145,29 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 	.vsl-frame.is-swapped {
 		opacity: 1;
 	}
+
+	.vsl-loading {
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 150ms ease;
+	}
+
+	.vsl-loading.is-visible {
+		opacity: 1;
+	}
+
+	.vsl-spinner {
+		width: 32px;
+		height: 32px;
+		border-radius: 9999px;
+		border: 3px solid rgba(255, 255, 255, 0.25);
+		border-top-color: #fff;
+		animation: vslSpin 800ms linear infinite;
+	}
+
+	@keyframes vslSpin {
+		to { transform: rotate(360deg); }
+	}
 </style>
 
 <script define:vars={{ componentId }}>
@@ -149,9 +178,10 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 
 		const frame = root.querySelector("[data-frame]");
 		const playerUrl = root.getAttribute("data-player-url");
-		const vimeoId = root.getAttribute("data-vimeo-id");
+		const vimeoId = root.getAttribute("data-vsl-vimeo-id");
 		const unmuteBtn = root.querySelector("[data-unmute]");
 		const placeholder = root.querySelector("[data-placeholder]");
+		const loadingEl = root.querySelector("[data-loading]");
 		if (!frame || !playerUrl) return;
 
 		const storageKey = `metodo-rec-vsl-position-${vimeoId}`;
@@ -181,23 +211,14 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			},
 		};
 
-		let iframe = frame.querySelector("iframe");
-		if (!iframe) {
-			iframe = document.createElement("iframe");
-			iframe.src = playerUrl;
-			iframe.allow = "autoplay; fullscreen; picture-in-picture";
-			iframe.allowFullscreen = true;
-			iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;";
-			frame.appendChild(iframe);
-		}
-
-		// El SDK crea una instancia nueva por iframe — si este iframe persistió
-		// de una página anterior (transition:persist) ya tiene la suya.
-		const player = iframe.__vslPlayer ?? new window.Vimeo.Player(iframe);
-		iframe.__vslPlayer = player;
-
-		let revealed = false;
+		let iframe = null;
+		let player = null;
 		let fallbackTimer = null;
+		let vimeoReady = false;
+		let unmuted = false;
+
+		const showLoading = () => loadingEl?.classList.add("is-visible");
+		const hideLoading = () => loadingEl?.classList.remove("is-visible");
 
 		// El video de Vimeo se autorreproduce muteado de fondo desde que carga
 		// la página (para estar listo apenas se lo pida) — eso dispara su
@@ -211,6 +232,8 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 		const swapToVimeo = () => {
 			if (iframe.__vslSwapped) return;
 			iframe.__vslSwapped = true;
+			if (fallbackTimer) clearTimeout(fallbackTimer);
+			hideLoading();
 			placeholder?.classList.add("is-swapped");
 			frame.classList.add("is-swapped");
 			placeholder?.pause?.();
@@ -233,29 +256,44 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			});
 		};
 
-		const revealVimeo = () => {
-			if (revealed) return;
-			revealed = true;
-			if (fallbackTimer) clearTimeout(fallbackTimer);
+		// Crea el iframe real de Vimeo + la instancia del SDK recién la primera
+		// vez que hace falta (al activar) — antes esto corría apenas cargaba la
+		// página, así que el video real ya estaba reproduciendo oculto de fondo
+		// desde el primer segundo para el 100% de las visitas.
+		const ensurePlayer = () => {
+			if (player) return player;
 
-			// Si la visitante ya había visto el video antes (mismo navegador),
-			// retoma desde ahí en vez de arrancar de nuevo desde 0.
-			const savedSeconds = Number(safeStorage.get(storageKey)) || 0;
-			player.setCurrentTime(savedSeconds).catch(() => {});
-			player.setMuted(false).catch(() => {});
-			player.play().catch(() => {});
+			iframe = document.createElement("iframe");
+			iframe.src = playerUrl;
+			iframe.title = "Video: Así dejé de sufrir por amor y recuperé mi paz";
+			// "fullscreen" ya va en allow (forma moderna) — allowFullscreen es el
+			// atributo legacy equivalente; ponerlo también solo genera el warning
+			// de consola "Allow attribute will take precedence over 'allowfullscreen'".
+			iframe.allow = "autoplay; fullscreen; picture-in-picture";
+			iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;";
+			frame.appendChild(iframe);
 
-			setTimeout(swapToVimeo, 350);
-		};
+			player = new window.Vimeo.Player(iframe);
 
-		// Guarda el progreso cada pocos segundos (timeupdate dispara varias
-		// veces por segundo — no hace falta escribir en localStorage tan
-		// seguido). Los listeners del SDK persisten junto con el player, así
-		// que hay que evitar registrarlos dos veces si este setup corre de
-		// nuevo sobre el mismo iframe persistido.
-		if (!iframe.__vslListenersBound) {
-			iframe.__vslListenersBound = true;
+			// Espera a que Vimeo esté "ready" para recién ahí mostrar el video
+			// real (evita el flash del poster estático de Vimeo) — pero eso es
+			// SOLO sobre cuándo revelarlo visualmente. Mientras tanto se ve la
+			// animación de carga en vez de dejar el placeholder solo sin ninguna
+			// señal de que el click se registró.
+			player
+				.ready()
+				.then(() => {
+					vimeoReady = true;
+					if (fallbackTimer) {
+						clearTimeout(fallbackTimer);
+						fallbackTimer = null;
+					}
+					if (unmuted) setTimeout(swapToVimeo, 350);
+				})
+				.catch(() => {});
 
+			// Guarda el progreso cada pocos segundos (timeupdate dispara varias
+			// veces por segundo — no hace falta escribir en localStorage tan seguido).
 			let lastSaveAt = 0;
 			player.on("timeupdate", (data) => {
 				const now = Date.now();
@@ -266,31 +304,37 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 
 			// Terminó de verlo — la próxima vez arranca de nuevo desde el principio.
 			player.on("ended", () => safeStorage.remove(storageKey));
-		}
 
-		let vimeoReady = false;
-		let playRequested = false;
-		player
-			.ready()
-			.then(() => {
-				vimeoReady = true;
-				if (playRequested) revealVimeo();
-			})
-			.catch(() => {});
+			return player;
+		};
 
-		let unmuted = false;
 		const activate = () => {
 			if (unmuted) return;
 			unmuted = true;
 			unmuteBtn?.classList.add("is-muted-off");
-			playRequested = true;
-			// Si Vimeo ya está listo, se revela al toque; si no, el placeholder
-			// se queda loopeando y revealVimeo() se dispara solo desde
-			// player.ready() apenas resuelva. Si por lo que sea eso nunca pasa
-			// (red lenta, video bloqueado), no dejamos a la visitante trabada
-			// mirando el placeholder para siempre.
-			if (vimeoReady) revealVimeo();
-			else fallbackTimer = setTimeout(revealVimeo, 4000);
+			showLoading();
+
+			const p = ensurePlayer();
+
+			// Estas tres llamadas van ACÁ, sincrónicas, adentro del handler de
+			// click real — si se llaman más tarde (dentro de un .then() o un
+			// setTimeout) fuera del gesto de click original, los navegadores
+			// mobile (sobre todo iOS Safari) pueden bloquear en silencio el
+			// play() con sonido por su política de autoplay — el video quedaba
+			// revelado pero pausado, sin ningún error visible. El SDK de Vimeo
+			// encola estos comandos solo, así que no hace falta esperar a que
+			// "ready" resuelva para mandarlos.
+			const savedSeconds = Number(safeStorage.get(storageKey)) || 0;
+			p.setCurrentTime(savedSeconds).catch(() => {});
+			p.setMuted(false).catch(() => {});
+			p.play().catch(() => {});
+
+			// Si Vimeo ya está listo, el swap visual pasa casi al toque; si no,
+			// se ve la animación de carga hasta que "ready" resuelva (ver más
+			// arriba) o, como red de seguridad, hasta 4s como mucho — nunca se
+			// deja a la visitante sin ninguna señal de que el click funcionó.
+			if (vimeoReady) setTimeout(swapToVimeo, 350);
+			else fallbackTimer = setTimeout(swapToVimeo, 4000);
 		};
 
 		unmuteBtn?.addEventListener("click", activate);

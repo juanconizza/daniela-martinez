@@ -1,23 +1,15 @@
 ---
 /**
- * Widget inline de Calendly, compartido entre /metodo-rec (donde se precarga
- * oculto, para que ya esté listo) y /metodo-rec/agendar (donde se muestra).
+ * Widget inline de Calendly, usado en /metodo-rec/agendar. Se carga on-demand
+ * ahí nomás (ya no se precarga oculto desde /metodo-rec — el widget.js de
+ * Calendly trae Stripe + reCAPTCHA y pesaba ~2.6MB de fondo para el 100% de
+ * las visitas, la mayoría sin llegar a agendar).
  *
- * El div lleva transition:persist para que, al navegar entre esas dos páginas
- * vía ClientRouter (SPA, sin recarga completa), Astro reutilice el MISMO
- * nodo del DOM en vez de descartarlo y crear uno nuevo — así el iframe que ya
- * cargó en /metodo-rec llega a /agendar tal cual, sin volver a pedirle nada a
- * Calendly. Esto requiere que el link que lleva a /agendar NO tenga
- * data-astro-reload (eso forzaría una recarga completa del navegador, que
- * destruye cualquier estado sin importar qué tan precargado esté).
- *
- * Calendly solo termina de renderizar su contenido real (y manda una altura
- * real por postMessage) una vez que su iframe queda VISIBLE en pantalla —
- * aunque lo precarguemos fuera de la pantalla con tamaño real, tarda uno o
- * dos segundos en terminar de dibujarse recién cuando se revela. Por eso el
- * widget arranca oculto (opacity:0) con un skeleton de carga encima, y recién
- * se revela cuando llega una altura real (no la mini altura transitoria que
- * manda mientras se está reacomodando).
+ * Calendly tarda uno o dos segundos en terminar de renderizar su contenido
+ * real (y mandar una altura real por postMessage) desde que el iframe existe.
+ * Por eso el widget arranca oculto (opacity:0) con un skeleton de carga
+ * encima, y recién se revela cuando llega una altura real (no la mini altura
+ * transitoria que manda mientras se está acomodando).
  */
 interface Props {
 	calendlyUrl: string;
@@ -43,8 +35,6 @@ const calendlyEmbedUrl = buildCalendlyEmbedUrl(calendlyUrl);
 			class="calendly-inline-widget is-loading"
 			data-url={calendlyEmbedUrl}
 			style="width:100%;height:100%;min-width:280px;"
-			transition:persist="calendly-widget"
-			transition:animate="none"
 		>
 		</div>
 		<div class="calendly-skeleton absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#f5ece3]" data-skeleton>
@@ -63,12 +53,10 @@ const calendlyEmbedUrl = buildCalendlyEmbedUrl(calendlyUrl);
 
 		const skeleton = widget.parentElement?.querySelector("[data-skeleton]");
 
-		// El div puede llegar ya con un listener registrado desde antes (si
-		// persistió de /metodo-rec) — se limpia para no duplicarlo.
+		// Defensivo ante un re-setup sobre el mismo nodo (ej. HMR en dev) — se
+		// limpia el listener anterior para no duplicarlo.
 		if (widget.__calendlyCleanup) widget.__calendlyCleanup();
 
-		// Si ya se había revelado antes de este setup (persistido desde
-		// /metodo-rec con el skeleton ya sacado), no hay que volver a taparlo.
 		let settled = !widget.classList.contains("is-loading");
 
 		const reveal = () => {

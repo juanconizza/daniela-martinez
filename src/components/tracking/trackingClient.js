@@ -483,25 +483,20 @@ function trackFormSubmit(form, config) {
  * <head>, que con SPA routing no está garantizado que se re-ejecute).
  *
  * @param {boolean} isInitialLoad true solo en el primer astro:page-load de la
- * sesión — lo usa Google Ads para no duplicar el hit de remarketing
- * automático que manda solo en esa primera carga (ver el guard más abajo).
- * GA4 y Meta lo ignoran, se mandan siempre.
+ * sesión — lo usan tanto Google Ads (no duplicar su propio hit de remarketing
+ * automático de esa primera carga) como GA4 (su page_view inicial ya se manda
+ * sincrónico desde GoogleAdsPixel.astro, no acá — ver los guards más abajo).
+ * Meta lo ignora, su PageView se manda siempre desde acá.
  */
 function trackPageView(config, isInitialLoad) {
   if (config.enableGoogleTracking) {
     const pageViewParams = { page_location: window.location.href, page_title: document.title };
 
-    // GA4: se manda siempre, también en la carga inicial. En teoría "Enhanced
-    // Measurement" de GA4 ya manda su propio page_view automático en esa
-    // primera carga, pero eso depende de una config del lado de GA4 que no
-    // controlamos desde acá (si está apagada, ese primer page_view se pierde
-    // del todo) — mandarlo siempre a mano es lo único confiable. Si GA4 tiene
-    // Enhanced Measurement activo vas a ver el page_view de la carga inicial
-    // duplicado (uno de cada lado); en ese caso, en GA4 Admin → Flujos de
-    // datos → Web → engranaje de "Vistas de página" desactivá el evento
-    // automático de page_view (dejando el resto de Enhanced Measurement
-    // intacto) para quedarte solo con el nuestro.
-    if (config.ga4Id) {
+    // GA4: el page_view de la carga inicial se manda sincrónico desde
+    // GoogleAdsPixel.astro (ver comentario ahí — evita depender del módulo
+    // deferred de ClientRouter para el hit más crítico), así que acá solo se
+    // manda en navegaciones SPA subsiguientes, para no duplicarlo.
+    if (!isInitialLoad && config.ga4Id) {
       sendGoogleEvent("page_view", { ...pageViewParams, send_to: config.ga4Id });
     }
 

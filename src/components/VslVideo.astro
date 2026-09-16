@@ -156,6 +156,31 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 
 		const storageKey = `metodo-rec-vsl-position-${vimeoId}`;
 
+		// Safari en modo privado (y algunos navegadores in-app, como el de Meta
+		// Ads en iOS) tiran QuotaExceededError en CUALQUIER escritura a
+		// localStorage — sin este wrapper, eso rompía la consola en una porción
+		// real de sesiones mobile. Perder el "retomar donde quedó" en esos casos
+		// no es grave; dejar sin capturar el error si lo es.
+		const safeStorage = {
+			get(key) {
+				try {
+					return localStorage.getItem(key);
+				} catch {
+					return null;
+				}
+			},
+			set(key, value) {
+				try {
+					localStorage.setItem(key, value);
+				} catch {}
+			},
+			remove(key) {
+				try {
+					localStorage.removeItem(key);
+				} catch {}
+			},
+		};
+
 		let iframe = frame.querySelector("iframe");
 		if (!iframe) {
 			iframe = document.createElement("iframe");
@@ -215,7 +240,7 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 
 			// Si la visitante ya había visto el video antes (mismo navegador),
 			// retoma desde ahí en vez de arrancar de nuevo desde 0.
-			const savedSeconds = Number(localStorage.getItem(storageKey)) || 0;
+			const savedSeconds = Number(safeStorage.get(storageKey)) || 0;
 			player.setCurrentTime(savedSeconds).catch(() => {});
 			player.setMuted(false).catch(() => {});
 			player.play().catch(() => {});
@@ -236,11 +261,11 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 				const now = Date.now();
 				if (now - lastSaveAt < 2000) return;
 				lastSaveAt = now;
-				localStorage.setItem(storageKey, String(Math.floor(data.seconds)));
+				safeStorage.set(storageKey, String(Math.floor(data.seconds)));
 			});
 
 			// Terminó de verlo — la próxima vez arranca de nuevo desde el principio.
-			player.on("ended", () => localStorage.removeItem(storageKey));
+			player.on("ended", () => safeStorage.remove(storageKey));
 		}
 
 		let vimeoReady = false;
@@ -277,10 +302,20 @@ const componentId = `vsl-video-${Math.random().toString(36).slice(2, 8)}`;
 			// tiene que arrancar el video real — si no, entra a pantalla
 			// completa mostrando el iframe muteado/pausado de fondo.
 			activate();
-			player.requestFullscreen().catch(() => {
+			// iOS Safari no soporta la Fullscreen API para iframes — según la
+			// versión, requestFullscreen() puede tirar SINCRÓNICO en vez de
+			// devolver una promesa rechazada, y un .catch() solo no alcanza para
+			// atajar eso. Promise.resolve(...) adentro del try normaliza los dos
+			// casos a un mismo camino de fallback.
+			try {
+				Promise.resolve(player.requestFullscreen()).catch(() => {
+					if (iframe.requestFullscreen) iframe.requestFullscreen();
+					else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+				});
+			} catch {
 				if (iframe.requestFullscreen) iframe.requestFullscreen();
 				else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-			});
+			}
 		});
 	}
 

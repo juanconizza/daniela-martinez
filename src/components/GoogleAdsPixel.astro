@@ -37,11 +37,29 @@ const shouldLoadGooglePixel = Boolean(gtagLoaderId && enableGoogleTracking);
 					gtag('config', googleAdsId);
 				}
 				if (ga4Id) {
-					// send_page_view:false porque el pageview de GA4 se dispara a mano en
-					// cada astro:page-load, INCLUIDA la carga inicial (ver trackPageView
-					// en trackingClient.js) — si no, este auto-pageview del config
-					// duplicaría el nuestro en esa primera carga.
+					// send_page_view:false porque el pageview de GA4 se dispara a mano —
+					// ver el comentario abajo sobre por qué el de la carga inicial se
+					// manda ACÁ y no desde trackPageView() en trackingClient.js.
 					gtag('config', ga4Id, { send_page_view: false });
+
+					// El page_view de la carga inicial se manda sincrónico, en esta
+					// misma línea de ejecución del <head> — a propósito, en vez de
+					// esperar a "astro:page-load" (que dispara trackPageView() en
+					// trackingClient.js, un módulo de ClientRouter que carga deferred).
+					// En sesiones que rebotan muy rápido (típico de tráfico de Meta Ads
+					// entrando por el navegador in-app en mobile, compitiendo por CPU/red
+					// con Vimeo Player SDK + Calendly/Stripe/reCAPTCHA cargando en la
+					// misma página) la visitante se puede ir antes de que ese módulo
+					// llegue a ejecutarse — perdiendo el page_view (y con él, la landing
+					// page) del todo para GA4, aunque Clarity sí llegue a registrar la
+					// sesión (su script es sincrónico y mucho más liviano). Achicar esa
+					// ventana acá reduce el riesgo real, aunque no lo elimina del todo si
+					// el navegador in-app hace algo más raro con la URL/redirect.
+					gtag('event', 'page_view', {
+						page_location: window.location.href,
+						page_title: document.title,
+						send_to: ga4Id,
+					});
 				}
 			</script>
 		</>
